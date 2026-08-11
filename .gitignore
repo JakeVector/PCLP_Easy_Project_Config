@@ -1,2 +1,3 @@
 .vscode/
+python/gui/__pycache__/
 *.txt
