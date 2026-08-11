@@ -1,2 +1,2 @@
 # PCLP_Easy_Project_Config
-Python script that utilizes the PCLP imposter utility in order to generate a full project configuration
+A simple application that lets users configure PC-lint Plus without needing to manually edit configuration files or run commands themselves.
