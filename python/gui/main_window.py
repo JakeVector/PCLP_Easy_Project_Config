@@ -26,7 +26,11 @@ class MainWindow(QMainWindow):
         # Creating widgets for the GUI
         # QLineEdit for entering the path to PC-lint Plus, QComboBox for selecting the compiler family, 
         # and QPushButton for generating the configuration.
-        self.create_line_widgets()
+        self.pclp_path = self.create_line_widgets("Enter path to PC-lint Plus")
+        self.compiler_binary = self.create_line_widgets("Enter path to compiler executable")
+        self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files")
+        self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
+        
         self.create_combobox_widget()
         self.create_generate_button_widget()
 
@@ -34,18 +38,10 @@ class MainWindow(QMainWindow):
         self.create_layout()
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
-    def create_line_widgets(self):
-        self.pclp_path = QLineEdit(self)
-        self.pclp_path.setPlaceholderText("Enter path to PC-lint Plus")
-
-        self.compiler_binary = QLineEdit(self)
-        self.compiler_binary.setPlaceholderText("Enter path to compiler executable")
-
-        self.lint_output_location = QLineEdit(self)
-        self.lint_output_location.setPlaceholderText("Enter path for .lnt and .h files")
-        
-        self.lint_output_name = QLineEdit(self)
-        self.lint_output_name.setPlaceholderText("Enter file name for .lnt and .h files")
+    def create_line_widgets(self, placeholder_texts=""):
+        line_edit_widget = QLineEdit(self)
+        line_edit_widget.setPlaceholderText(placeholder_texts)
+        return line_edit_widget
 
     # This function creates a QComboBox for selecting the compiler family, with options for GCC, Clang, and MSVC.
     def create_combobox_widget(self):
