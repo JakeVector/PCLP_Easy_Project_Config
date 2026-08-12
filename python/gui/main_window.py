@@ -33,6 +33,8 @@ class MainWindow(QMainWindow):
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
         self.compiler_family = self.create_combobox_widget(["GCC", "Clang", "MSVC"])
+        # Creating a button for generating the configuration, which is connected to the on_button_clicked function.
+        self.button = self.create_generic_button_widget("Generate Config", function=self.on_button_clicked)
 
         # Create layout for each row of widgets, including labels and browse buttons where applicable.
         pclp_path_layout = self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True)
@@ -40,8 +42,12 @@ class MainWindow(QMainWindow):
         compiler_binary_layout = self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False)
         lint_output_location_layout = self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True)
         lint_output_name_layout = self.create_layout_row("Lint Output Name:", self.lint_output_name)
-        
-        self.create_generate_button_widget()
+
+        # Generate button layout is created separately to ensure it is added to the main layout correctly.
+        generate_button_layout = QHBoxLayout()
+        generate_button_layout.addStretch()  # Add stretch to push the button to the right
+        generate_button_layout.addWidget(self.button)
+        generate_button_layout.addStretch()  # Add stretch to push the button to the right
 
         # Setting up GUI layout, adding the widgets to the layout and setting the layout for the main window.
         self.add_to_layout(pclp_path_layout)
@@ -49,6 +55,11 @@ class MainWindow(QMainWindow):
         self.add_to_layout(compiler_binary_layout)
         self.add_to_layout(lint_output_location_layout)
         self.add_to_layout(lint_output_name_layout)
+        self.add_to_layout(generate_button_layout)  # Add the button layout to the main layout
+
+        container = QWidget()
+        container.setLayout(self.layout)
+        self.setCentralWidget(container)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
     def create_line_widgets(self, placeholder_texts=""):
@@ -65,10 +76,13 @@ class MainWindow(QMainWindow):
         return combo_box
 
     # This function creates a QPushButton that is checkable and connects its clicked signal to the on_button_clicked function.
-    def create_generate_button_widget(self):
-        self.button = QPushButton("Generate Config")
-        self.button.setCheckable(True)
-        self.button.clicked.connect(self.on_button_clicked)
+    def create_generic_button_widget(self, placeholder_texts="", function=None):
+        button = QPushButton(placeholder_texts)
+        button.setCheckable(True)
+        if function is not None:
+            button.clicked.connect(function)
+        button.setFixedWidth(150)  # Set a fixed width for the button
+        return button
 
     def create_browse_button_widget(self, line_edit_widget, is_folder=True):
         if is_folder:
@@ -83,21 +97,15 @@ class MainWindow(QMainWindow):
     def add_to_layout(self, layout=None):
         if layout is None:
             return
-
         self.layout.addRow(layout)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.button)
-        self.layout.addRow(button_layout)
-
-        container = QWidget()
-        container.setLayout(self.layout)
-        
-        self.setCentralWidget(container)
-
-    def create_layout_row(self, label_text, widget, browse=False, is_folder=False):
+    def create_layout_row(self, label_text="", widget=None, browse=False, is_folder=False):
+            if widget is None:
+                return
             layout = QHBoxLayout()
-            layout.addWidget(QLabel(label_text))
+            label = QLabel(label_text)
+            label.setFixedWidth(120)
+            layout.addWidget(label)
             layout.addWidget(widget)
             if browse:
                 if is_folder:
