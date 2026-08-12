@@ -23,6 +23,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("PC-lint Plus Configurator")
         self.setFixedSize(QSize(600, 200))
 
+        self.layout = QFormLayout()
+
         # Creating widgets for the GUI
         # QLineEdit for entering the path to PC-lint Plus, QComboBox for selecting the compiler family, 
         # and QPushButton for generating the configuration.
@@ -30,12 +32,23 @@ class MainWindow(QMainWindow):
         self.compiler_binary = self.create_line_widgets("Enter path to compiler executable")
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
+        self.compiler_family = self.create_combobox_widget(["GCC", "Clang", "MSVC"])
+
+        # Create layout for each row of widgets, including labels and browse buttons where applicable.
+        pclp_path_layout = self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True)
+        compiler_family_layout = self.create_layout_row("Compiler Family:", self.compiler_family)
+        compiler_binary_layout = self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False)
+        lint_output_location_layout = self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True)
+        lint_output_name_layout = self.create_layout_row("Lint Output Name:", self.lint_output_name)
         
-        self.create_combobox_widget()
         self.create_generate_button_widget()
 
-        # Setting up GUI layout, VBoxLayout for vertical stacking and HBoxLayout for horizontal stacking of widgets
-        self.create_layout()
+        # Setting up GUI layout, adding the widgets to the layout and setting the layout for the main window.
+        self.add_to_layout(pclp_path_layout)
+        self.add_to_layout(compiler_family_layout)
+        self.add_to_layout(compiler_binary_layout)
+        self.add_to_layout(lint_output_location_layout)
+        self.add_to_layout(lint_output_name_layout)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
     def create_line_widgets(self, placeholder_texts=""):
@@ -44,9 +57,12 @@ class MainWindow(QMainWindow):
         return line_edit_widget
 
     # This function creates a QComboBox for selecting the compiler family, with options for GCC, Clang, and MSVC.
-    def create_combobox_widget(self):
-        self.compiler_family = QComboBox(self)
-        self.compiler_family.addItems(["GCC", "Clang", "MSVC"])
+    def create_combobox_widget(self, items=None):
+        if items is None:
+            return
+        combo_box = QComboBox(self)
+        combo_box.addItems(items)
+        return combo_box
 
     # This function creates a QPushButton that is checkable and connects its clicked signal to the on_button_clicked function.
     def create_generate_button_widget(self):
@@ -64,23 +80,31 @@ class MainWindow(QMainWindow):
         return button
 
     # This function sets up the layout of the GUI, arranging the widgets in a vertical layout with horizontal layouts for each row of widgets.
-    def create_layout(self):
-        layout = QFormLayout()
-        
-        layout.addRow(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
-        layout.addRow(self.create_layout_row("Compiler Family:", self.compiler_family))
-        layout.addRow(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
-        layout.addRow(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
-        layout.addRow(self.create_layout_row("Lint Output Name:", self.lint_output_name))
+    def add_to_layout(self, layout=None):
+        if layout is None:
+            return
+
+        self.layout.addRow(layout)
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.button)
-        layout.addRow(button_layout)
+        self.layout.addRow(button_layout)
 
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(self.layout)
         
         self.setCentralWidget(container)
+
+    def create_layout_row(self, label_text, widget, browse=False, is_folder=False):
+            layout = QHBoxLayout()
+            layout.addWidget(QLabel(label_text))
+            layout.addWidget(widget)
+            if browse:
+                if is_folder:
+                    layout.addWidget(self.create_browse_button_widget(widget, is_folder=True))
+                else:
+                    layout.addWidget(self.create_browse_button_widget(widget, is_folder=False))
+            return layout
 
     # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
     def on_button_clicked(self):
@@ -95,17 +119,6 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if file_path:
             line_edit_widget.setText(file_path)
-
-    def create_layout_row(self, label_text, widget, browse=False, is_folder=False):
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel(label_text))
-        layout.addWidget(widget)
-        if browse:
-            if is_folder:
-                layout.addWidget(self.create_browse_button_widget(widget, is_folder=True))
-            else:
-                layout.addWidget(self.create_browse_button_widget(widget, is_folder=False))
-        return layout
 
 def create_window():
     app = QApplication(sys.argv)
