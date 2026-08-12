@@ -50,12 +50,12 @@ class MainWindow(QMainWindow):
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
 
         # Setting up GUI layout, adding the widgets to the layout and setting the layout for the main window.
-        self.add_to_layout(pclp_path_layout)
-        self.add_to_layout(compiler_family_layout)
-        self.add_to_layout(compiler_binary_layout)
-        self.add_to_layout(lint_output_location_layout)
-        self.add_to_layout(lint_output_name_layout)
-        self.add_to_layout(generate_button_layout)  # Add the button layout to the main layout
+        self.layout.addRow(pclp_path_layout)
+        self.layout.addRow(compiler_family_layout)
+        self.layout.addRow(compiler_binary_layout)
+        self.layout.addRow(lint_output_location_layout)
+        self.layout.addRow(lint_output_name_layout)
+        self.layout.addRow(generate_button_layout)  # Add the button layout to the main layout
 
         container = QWidget()
         container.setLayout(self.layout)
@@ -92,12 +92,6 @@ class MainWindow(QMainWindow):
             button = QPushButton("Browse...")
             button.clicked.connect(lambda: self.browse_for_file(line_edit_widget))
         return button
-
-    # This function sets up the layout of the GUI, arranging the widgets in a vertical layout with horizontal layouts for each row of widgets.
-    def add_to_layout(self, layout=None):
-        if layout is None:
-            return
-        self.layout.addRow(layout)
 
     def create_layout_row(self, label_text="", widget=None, browse=False, is_folder=False):
             if widget is None:
