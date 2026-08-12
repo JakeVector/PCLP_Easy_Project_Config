@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
         button.setFixedWidth(150)  # Set a fixed width for the button
         return button
 
+    # This function creates a "Browse..." button that opens a file or folder dialog when clicked, depending on the is_folder parameter.
     def create_browse_button_widget(self, line_edit_widget, is_folder=True):
         if is_folder:
             button = QPushButton("Browse...")
@@ -93,6 +94,7 @@ class MainWindow(QMainWindow):
             button.clicked.connect(lambda: self.browse_for_file(line_edit_widget))
         return button
 
+    # This function creates a layout row that includes a label, a widget (like QLineEdit or QComboBox), and optionally a "Browse..." button.
     def create_layout_row(self, label_text="", widget=None, browse=False, is_folder=False):
             if widget is None:
                 return
@@ -109,11 +111,13 @@ class MainWindow(QMainWindow):
     def on_button_clicked(self):
         print("Generate Config button clicked!")
 
+    # This function opens a folder selection dialog and sets the selected folder path to the provided QLineEdit widget.
     def browse_for_folder(self, line_edit_widget):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Directory")
         if folder_path:
             line_edit_widget.setText(folder_path)
 
+    # This function opens a file selection dialog and sets the selected file path to the provided QLineEdit widget.
     def browse_for_file(self, line_edit_widget):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if file_path:
