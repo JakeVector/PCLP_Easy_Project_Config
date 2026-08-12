@@ -102,10 +102,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(label)
             layout.addWidget(widget)
             if browse:
-                if is_folder:
-                    layout.addWidget(self.create_browse_button_widget(widget, is_folder=True))
-                else:
-                    layout.addWidget(self.create_browse_button_widget(widget, is_folder=False))
+                layout.addWidget(self.create_browse_button_widget(widget, is_folder))
             return layout
 
     # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
