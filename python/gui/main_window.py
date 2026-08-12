@@ -71,34 +71,11 @@ class MainWindow(QMainWindow):
     def create_layout(self):
         layout = QFormLayout()
         
-        pclp_path_layout = QHBoxLayout()
-        pclp_path_layout.addWidget(QLabel("PC-lint Plus Path:"))
-        pclp_path_layout.addWidget(self.pclp_path)
-        pclp_path_layout.addWidget(self.create_browse_button_widget(self.pclp_path, is_folder=True))
-        layout.addRow(pclp_path_layout)
-
-        compiler_family_layout = QHBoxLayout()
-        compiler_family_label = QLabel("Compiler Family:")
-        compiler_family_layout.addWidget(compiler_family_label)
-        compiler_family_layout.addWidget(self.compiler_family)
-        layout.addRow(compiler_family_layout)
-
-        compiler_binary_layout = QHBoxLayout()
-        compiler_binary_layout.addWidget(QLabel("Compiler Binary:"))
-        compiler_binary_layout.addWidget(self.compiler_binary)
-        compiler_binary_layout.addWidget(self.create_browse_button_widget(self.compiler_binary, is_folder=False))
-        layout.addRow(compiler_binary_layout)
-
-        lint_output_location_layout = QHBoxLayout()
-        lint_output_location_layout.addWidget(QLabel("Lint Output Location:"))
-        lint_output_location_layout.addWidget(self.lint_output_location)
-        lint_output_location_layout.addWidget(self.create_browse_button_widget(self.lint_output_location, is_folder=True))
-        layout.addRow(lint_output_location_layout)
-
-        lint_output_name_layout = QHBoxLayout()
-        lint_output_name_layout.addWidget(QLabel("Lint Output Name:"))
-        lint_output_name_layout.addWidget(self.lint_output_name)
-        layout.addRow(lint_output_name_layout)
+        layout.addRow(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
+        layout.addRow(self.create_layout_row("Compiler Family:", self.compiler_family))
+        layout.addRow(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
+        layout.addRow(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
+        layout.addRow(self.create_layout_row("Lint Output Name:", self.lint_output_name))
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.button)
@@ -122,6 +99,17 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if file_path:
             line_edit_widget.setText(file_path)
+
+    def create_layout_row(self, label_text, widget, browse=False, is_folder=False):
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel(label_text))
+        layout.addWidget(widget)
+        if browse:
+            if is_folder:
+                layout.addWidget(self.create_browse_button_widget(widget, is_folder=True))
+            else:
+                layout.addWidget(self.create_browse_button_widget(widget, is_folder=False))
+        return layout
 
 def create_window():
     app = QApplication(sys.argv)
