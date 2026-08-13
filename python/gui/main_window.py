@@ -7,14 +7,45 @@ from PySide6.QtWidgets import (
     QLabel, 
     QComboBox,
     QHBoxLayout,
-    QFileDialog,
+    QVBoxLayout,
     QFormLayout,
+    QFileDialog,
     QTabWidget,
-    QVBoxLayout
+    QMenu,
+    QPushButton,
 )
 from PySide6.QtCore import QSize
 import sys
 from pathlib import Path
+
+IAR_COMPILERS = [
+        "iar-430",
+        "iar-78k",
+        "iar-8051",
+        "iar-arm",
+        "iar-avr",
+        "iar-avr32",
+        "iar-cf",
+        "iar-cr16c",
+        "iar-h8",
+        "iar-hcs12",
+        "iar-m16c",
+        "iar-m32c",
+        "iar-maxq",
+        "iar-r32c",
+        "iar-rh850",
+        "iar-r178",
+        "iar-rx",
+        "iar-s08",
+        "iar-sam8",
+        "iar-v850",
+        ]
+
+KEIL_COMPILERS = [
+        "keil_armcc",
+        "keil_armclang",
+        "keil_c51",
+        ]
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
@@ -27,6 +58,8 @@ class MainWindow(QMainWindow):
 
         # Creating widgets for the GUI
         self.create_widgets()
+        # Creating menus for the GUI
+        self.create_menus()
         # Creating layouts for the GUI
         self.create_layouts()
         # Creating tabs for the GUI
@@ -46,10 +79,32 @@ class MainWindow(QMainWindow):
 
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["C", "C++", "Mixed C/C++"])
-        self.compiler_family = self.create_combobox_widget(["[Default]","GCC", "Clang", "MSVC"])
 
         # Button widgets
-        self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked)
+        self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked_generate_config)
+
+    def create_menus(self):
+        self.selected_compiler = None  # Initialize selected compiler variable
+        self.compiler_button = self.create_generic_button_widget("Select Compiler")
+        
+        compiler_menu = QMenu("Compiler", self)
+
+        self.add_selection_action(compiler_menu, "gcc")
+        self.add_selection_action(compiler_menu, "clang")
+
+        # IAR compilers are grouped under a submenu for better organization.
+        iar_menu = compiler_menu.addMenu("IAR")       
+        for compiler in IAR_COMPILERS:
+            self.add_selection_action(iar_menu, compiler)
+        
+        keil_menu = compiler_menu.addMenu("Keil")
+        for compiler in KEIL_COMPILERS:
+            self.add_selection_action(keil_menu, compiler)
+
+        self.add_selection_action(compiler_menu, "GHS")
+
+        self.add_selection_action(compiler_menu, "msvc")
+        self.compiler_button.setMenu(compiler_menu)
 
     # Function to create layouts for the GUI to unclutter the __init__ function.
     def create_layouts(self):
@@ -63,7 +118,7 @@ class MainWindow(QMainWindow):
         self.pclp_layout.addRow(self.create_layout_row("Programming Language:", self.prog_language))
 
         # Next tab has compiler family selection, compiler binary path, lint output location and name, and additional options and the config button.
-        self.compiler_layout.addRow(self.create_layout_row("Compiler Family:", self.compiler_family))
+        self.compiler_layout.addRow(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
         self.compiler_layout.addRow(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
         self.compiler_layout.addRow(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
         self.compiler_layout.addRow(self.create_layout_row("Lint Output Name:", self.lint_output_name))
@@ -130,12 +185,13 @@ class MainWindow(QMainWindow):
             button.clicked.connect(lambda: self.browse_for_file(line_edit_widget))
         return button
 
+    # This function creates a QTabWidget for the GUI, setting its title and layout.
     def create_tab_widget(self, tab_name="", layout=None):
-            tab_widget = QTabWidget()
-            tab_widget.setWindowTitle(tab_name)
-            if layout is not None:
-                tab_widget.setLayout(layout)
-            self.tabs.addTab(tab_widget, tab_name)
+        tab_widget = QTabWidget()
+        tab_widget.setWindowTitle(tab_name)
+        if layout is not None:
+            tab_widget.setLayout(layout)
+        self.tabs.addTab(tab_widget, tab_name)
 
     # This function creates a layout row that includes a label, a widget (like QLineEdit or QComboBox), and optionally a "Browse..." button.
     def create_layout_row(self, label_text="", widget=None, browse=False, is_folder=False):
@@ -151,8 +207,27 @@ class MainWindow(QMainWindow):
             return layout
 
     # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
-    def on_button_clicked(self):
-        print("Generate Config button clicked!")
+    def on_button_clicked_generate_config(self):
+        pclp_path = self.pclp_path.text()
+        pclp_config = self.pclp_config_path.text()
+        language = self.prog_language.currentText()
+
+        compiler_binary = self.compiler_binary.text()
+        lint_output_location = self.lint_output_location.text()
+        lint_output_name = self.lint_output_name.text()
+        additional_options = self.additional_options.text()
+
+        compiler_selection = self.selected_compiler if self.selected_compiler else "No compiler selected"
+        
+
+        print(pclp_path)
+        print(pclp_config)
+        print(language)
+        print(compiler_binary)
+        print(lint_output_location)
+        print(lint_output_name)
+        print(additional_options)
+        print(compiler_selection)
 
     # This function opens a folder selection dialog and sets the selected folder path to the provided QLineEdit widget.
     def browse_for_folder(self, line_edit_widget):
@@ -165,6 +240,16 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if file_path:
             line_edit_widget.setText(file_path)
+
+    def add_selection_action(self, menu, text):
+        action = menu.addAction(text)
+        action.triggered.connect(
+            lambda: self.select_compiler(text)
+        )
+
+    def select_compiler(self, compiler):
+        self.selected_compiler = compiler
+        self.compiler_button.setText(compiler)
 
     # This function validates the folder path entered in the dialog. If the path doesn't exist, the border turns red and a tooltip is displayed. If the path is valid, the border returns to normal and the tooltip is cleared.
     def validate_folder_path(self, line_edit_widget):
