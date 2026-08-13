@@ -8,7 +8,9 @@ from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QFileDialog,
-    QFormLayout
+    QFormLayout,
+    QTabWidget,
+    QVBoxLayout
 )
 from PySide6.QtCore import QSize
 import sys
@@ -21,47 +23,72 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PC-lint Plus Configurator")
-        self.setFixedSize(QSize(600, 250))
-
-        self.layout = QFormLayout()
+        self.setFixedSize(QSize(650, 300))
 
         # Creating widgets for the GUI
-        # QLineEdit for entering the path to PC-lint Plus, QComboBox for selecting the compiler family, 
-        # and QPushButton for generating the configuration.
+        self.create_widgets()
+        # Creating layouts for the GUI
+        self.create_layouts()
+        # Creating tabs for the GUI
+        self.create_tabs()
+        # Creating the main window layout
+        self.create_window_layout()
+        
+    # Function to create widgets for the GUI to unclutter the __init__ function.
+    def create_widgets(self):
+        # LineEdit widgets
         self.pclp_path = self.create_line_widgets("Enter path to PC-lint Plus", browse_type="folder")
+        self.pclp_config_path = self.create_line_widgets("Enter path to PC-lint Plus config file", browse_type="file")
         self.compiler_binary = self.create_line_widgets("Enter path to compiler executable", browse_type="file")
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files", browse_type="folder")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
         self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
-        self.compiler_family = self.create_combobox_widget(["GCC", "Clang", "MSVC"])
-        # Creating a button for generating the configuration, which is connected to the on_button_clicked function.
-        self.button = self.create_generic_button_widget("Generate Config", function=self.on_button_clicked)
+
+        # Combobox widgets
+        self.prog_language = self.create_combobox_widget(["C", "C++", "Mixed C/C++"])
+        self.compiler_family = self.create_combobox_widget(["[Default]","GCC", "Clang", "MSVC"])
+
+        # Button widgets
+        self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked)
+
+    # Function to create layouts for the GUI to unclutter the __init__ function.
+    def create_layouts(self):
+        self.pclp_layout = QFormLayout()
+        self.compiler_layout = QFormLayout()
 
         # Create layout for each row of widgets, including labels and browse buttons where applicable.
-        pclp_path_layout = self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True)
-        compiler_family_layout = self.create_layout_row("Compiler Family:", self.compiler_family)
-        compiler_binary_layout = self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False)
-        lint_output_location_layout = self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True)
-        lint_output_name_layout = self.create_layout_row("Lint Output Name:", self.lint_output_name)
-        additional_options_layout = self.create_layout_row("Additional Options:", self.additional_options)
+        # Starting with the PC-lint Plus path and config file, followed by programming language selection for the first tab.
+        self.pclp_layout.addRow(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
+        self.pclp_layout.addRow(self.create_layout_row("PC-lint Plus Config File:", self.pclp_config_path, browse=True, is_folder=False))
+        self.pclp_layout.addRow(self.create_layout_row("Programming Language:", self.prog_language))
+
+        # Next tab has compiler family selection, compiler binary path, lint output location and name, and additional options and the config button.
+        self.compiler_layout.addRow(self.create_layout_row("Compiler Family:", self.compiler_family))
+        self.compiler_layout.addRow(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
+        self.compiler_layout.addRow(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
+        self.compiler_layout.addRow(self.create_layout_row("Lint Output Name:", self.lint_output_name))
+        self.compiler_layout.addRow(self.create_layout_row("Additional Options:", self.additional_options))
 
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
         generate_button_layout.addWidget(self.button)
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
+        self.compiler_layout.addRow(generate_button_layout)
 
-        # Setting up GUI layout, adding the widgets to the layout and setting the layout for the main window.
-        self.layout.addRow(pclp_path_layout)
-        self.layout.addRow(compiler_family_layout)
-        self.layout.addRow(compiler_binary_layout)
-        self.layout.addRow(lint_output_location_layout)
-        self.layout.addRow(lint_output_name_layout)
-        self.layout.addRow(additional_options_layout)
-        self.layout.addRow(generate_button_layout)  # Add the button layout to the main layout
+    # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
+    def create_tabs(self):
+        self.tabs = QTabWidget()
+        self.create_tab_widget("PCLP", self.pclp_layout)
+        self.create_tab_widget("Compiler", self.compiler_layout)
 
+    # This function creates the main window layout, adding the tabs to the central widget of the QMainWindow.
+    def create_window_layout(self):
         container = QWidget()
-        container.setLayout(self.layout)
+        container_layout = QVBoxLayout()
+        container_layout.addWidget(self.tabs)
+        container.setLayout(container_layout)
+
         self.setCentralWidget(container)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
@@ -70,9 +97,9 @@ class MainWindow(QMainWindow):
         line_edit_widget.setPlaceholderText(placeholder_texts)
 
         if browse_type == "folder":
-            line_edit_widget.editingFinished.connect(lambda: self.validate_folder_path(line_edit_widget))
+            line_edit_widget.textChanged.connect(lambda: self.validate_folder_path(line_edit_widget))
         elif browse_type == "file":
-            line_edit_widget.editingFinished.connect(lambda: self.validate_file_path(line_edit_widget))
+            line_edit_widget.textChanged.connect(lambda: self.validate_file_path(line_edit_widget))
 
         return line_edit_widget
 
@@ -90,7 +117,7 @@ class MainWindow(QMainWindow):
         button.setCheckable(True)
         if function is not None:
             button.clicked.connect(function)
-        button.setFixedWidth(150)  # Set a fixed width for the button
+        button.setFixedWidth(160)  # Set a fixed width for the button
         return button
 
     # This function creates a "Browse..." button that opens a file or folder dialog when clicked, depending on the is_folder parameter.
@@ -103,13 +130,20 @@ class MainWindow(QMainWindow):
             button.clicked.connect(lambda: self.browse_for_file(line_edit_widget))
         return button
 
+    def create_tab_widget(self, tab_name="", layout=None):
+            tab_widget = QTabWidget()
+            tab_widget.setWindowTitle(tab_name)
+            if layout is not None:
+                tab_widget.setLayout(layout)
+            self.tabs.addTab(tab_widget, tab_name)
+
     # This function creates a layout row that includes a label, a widget (like QLineEdit or QComboBox), and optionally a "Browse..." button.
     def create_layout_row(self, label_text="", widget=None, browse=False, is_folder=False):
             if widget is None:
                 return
             layout = QHBoxLayout()
             label = QLabel(label_text)
-            label.setFixedWidth(120)
+            label.setFixedWidth(135)  # Set a fixed width for the label to align with other labels
             layout.addWidget(label)
             layout.addWidget(widget)
             if browse:
@@ -132,6 +166,7 @@ class MainWindow(QMainWindow):
         if file_path:
             line_edit_widget.setText(file_path)
 
+    # This function validates the folder path entered in the dialog. If the path doesn't exist, the border turns red and a tooltip is displayed. If the path is valid, the border returns to normal and the tooltip is cleared.
     def validate_folder_path(self, line_edit_widget):
         folder_path = Path(line_edit_widget.text())
         if not folder_path.is_dir():
@@ -141,6 +176,7 @@ class MainWindow(QMainWindow):
             line_edit_widget.setStyleSheet("")
             line_edit_widget.setToolTip("")
 
+    # This function validates the file path entered in the dialog. If the path doesn't exist, the border turns red and a tooltip is displayed. If the path is valid, the border returns to normal and the tooltip is cleared.
     def validate_file_path(self, line_edit_widget):
         file_path = Path(line_edit_widget.text())
         if not file_path.is_file():
