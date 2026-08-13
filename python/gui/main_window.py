@@ -28,9 +28,9 @@ class MainWindow(QMainWindow):
         # Creating widgets for the GUI
         # QLineEdit for entering the path to PC-lint Plus, QComboBox for selecting the compiler family, 
         # and QPushButton for generating the configuration.
-        self.pclp_path = self.create_line_widgets("Enter path to PC-lint Plus")
-        self.compiler_binary = self.create_line_widgets("Enter path to compiler executable")
-        self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files")
+        self.pclp_path = self.create_line_widgets("Enter path to PC-lint Plus", browse_type="folder")
+        self.compiler_binary = self.create_line_widgets("Enter path to compiler executable", browse_type="file")
+        self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files", browse_type="folder")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
         self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
         self.compiler_family = self.create_combobox_widget(["GCC", "Clang", "MSVC"])
@@ -65,9 +65,15 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
-    def create_line_widgets(self, placeholder_texts=""):
+    def create_line_widgets(self, placeholder_texts="", browse_type=None):
         line_edit_widget = QLineEdit(self)
         line_edit_widget.setPlaceholderText(placeholder_texts)
+
+        if browse_type == "folder":
+            line_edit_widget.editingFinished.connect(lambda: self.validate_folder_path(line_edit_widget))
+        elif browse_type == "file":
+            line_edit_widget.editingFinished.connect(lambda: self.validate_file_path(line_edit_widget))
+
         return line_edit_widget
 
     # This function creates a QComboBox for selecting the compiler family, with options for GCC, Clang, and MSVC.
@@ -125,6 +131,24 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if file_path:
             line_edit_widget.setText(file_path)
+
+    def validate_folder_path(self, line_edit_widget):
+        folder_path = Path(line_edit_widget.text())
+        if not folder_path.is_dir():
+            line_edit_widget.setStyleSheet("border: 1px solid red;")
+            line_edit_widget.setToolTip("Directory does not exist. Please enter a valid directory path.")
+        else:
+            line_edit_widget.setStyleSheet("")
+            line_edit_widget.setToolTip("")
+
+    def validate_file_path(self, line_edit_widget):
+        file_path = Path(line_edit_widget.text())
+        if not file_path.is_file():
+            line_edit_widget.setStyleSheet("border: 1px solid red;")
+            line_edit_widget.setToolTip("File does not exist. Please enter a valid file path.")
+        else:
+            line_edit_widget.setStyleSheet("")
+            line_edit_widget.setToolTip("")
 
 def create_window():
     app = QApplication(sys.argv)
