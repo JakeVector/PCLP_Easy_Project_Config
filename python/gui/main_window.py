@@ -6,13 +6,13 @@ from PySide6.QtWidgets import (
     QLineEdit, 
     QLabel, 
     QComboBox,
-    QVBoxLayout,
     QHBoxLayout,
     QFileDialog,
     QFormLayout
 )
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize
 import sys
+from pathlib import Path
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PC-lint Plus Configurator")
-        self.setFixedSize(QSize(600, 200))
+        self.setFixedSize(QSize(600, 250))
 
         self.layout = QFormLayout()
 
@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         self.compiler_binary = self.create_line_widgets("Enter path to compiler executable")
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
+        self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
         self.compiler_family = self.create_combobox_widget(["GCC", "Clang", "MSVC"])
         # Creating a button for generating the configuration, which is connected to the on_button_clicked function.
         self.button = self.create_generic_button_widget("Generate Config", function=self.on_button_clicked)
@@ -42,6 +43,7 @@ class MainWindow(QMainWindow):
         compiler_binary_layout = self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False)
         lint_output_location_layout = self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True)
         lint_output_name_layout = self.create_layout_row("Lint Output Name:", self.lint_output_name)
+        additional_options_layout = self.create_layout_row("Additional Options:", self.additional_options)
 
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
@@ -55,6 +57,7 @@ class MainWindow(QMainWindow):
         self.layout.addRow(compiler_binary_layout)
         self.layout.addRow(lint_output_location_layout)
         self.layout.addRow(lint_output_name_layout)
+        self.layout.addRow(additional_options_layout)
         self.layout.addRow(generate_button_layout)  # Add the button layout to the main layout
 
         container = QWidget()
