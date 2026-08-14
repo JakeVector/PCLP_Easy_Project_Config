@@ -22,94 +22,16 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSize
 import sys
 from pathlib import Path
-
-IAR_COMPILERS = [
-    "iar-430",
-    "iar-78k",
-    "iar-8051",
-    "iar-arm",
-    "iar-avr",
-    "iar-avr32",
-    "iar-cf",
-    "iar-cr16c",
-    "iar-h8",
-    "iar-hcs12",
-    "iar-m16c",
-    "iar-m32c",
-    "iar-maxq",
-    "iar-r32c",
-    "iar-rh850",
-    "iar-r178",
-    "iar-rx",
-    "iar-s08",
-    "iar-sam8",
-    "iar-v850",
-    ]
-
-KEIL_COMPILERS = [
-    "keil_armcc",
-    "keil_armclang",
-    "keil_c51",
-    ]
-
-HIGHTEC_COMPILERS = [
-    "hightec_TC2x_TC3x",
-    "hightec_TC4x",
-    "hightec_arm",
-    ]
-
-CCS_COMPILERS = [
-    "ti_cl430",
-    "ti_cl2000",
-    "ti_cl6x",
-    "ti_armcl",
-    "ti_armclang",
-    ]
-
-S32DS_COMPILERS = [
-    "s32ds_arm",
-    "s32ds_ppc",
-    ]
-
-MICROCHIP_COMPILERS = [
-    "microchip_xc8",
-    "microchip_xc16",
-    "microchip_xc32",
-    ]
-
-MVSC_COMPILERS = [
-    "vs2022",
-    "vs2022_64",
-    "vs2019",
-    "vs2019_64",
-    "vs2017",
-    "vs2017_64",
-    "vs2015",
-    "vs2015_64",
-    "vs2013",
-    "vs2013_64",
-    "vs2012",
-    "vs2012_64",
-    "vs2010",
-    "vs2010_64",
-    "vs2008",
-    "vs2008_64",
-    "vs2005",
-    "vs2005_64",
-    ]
-
-CODING_STANDARDS = [
-    "MISRA C:2004",
-    "MISRA C:2012",
-    "MISRA C:2023",
-    "MISRA C:2025",
-    "MISRA C++:2008",
-    "BARR-C:2018",
-    "CERT C",
-    "CWE",
-    "AUTOSAR C++:2017",
-    "AUTOSAR C++:2019",
-    ]
+from gui.constants import (
+    IAR_COMPILERS,
+    KEIL_COMPILERS,
+    HIGHTEC_COMPILERS,
+    CCS_COMPILERS,
+    S32DS_COMPILERS,
+    MICROCHIP_COMPILERS,
+    MVSC_COMPILERS,
+    CODING_STANDARDS,
+)
 
 class MainWindow(QMainWindow):
     def __init__(self):
