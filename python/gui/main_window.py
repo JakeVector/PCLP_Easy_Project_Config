@@ -15,7 +15,9 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QGroupBox,
     QListWidget,
-    QGridLayout
+    QGridLayout,
+    QDialog,
+    QDialogButtonBox,
 )
 from PySide6.QtCore import QSize
 import sys
@@ -113,7 +115,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PC-lint Plus Configurator")
-        self.setFixedSize(QSize(650, 500))
+        self.setFixedSize(QSize(650, 600))
 
         # Creating widgets for the GUI
         self.create_widgets()
@@ -135,6 +137,7 @@ class MainWindow(QMainWindow):
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files", browse_type="folder")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
         self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
+        self.options_file_name = self.create_line_widgets("Enter file name for additional options (optional)")
 
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
@@ -207,7 +210,7 @@ class MainWindow(QMainWindow):
         self.compiler_layout.addStretch() 
         self.pclp_layout.addLayout(self.create_navigation_buttons(show_previous=False, show_next=True))
         self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
-        self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=False))
+        self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
@@ -259,10 +262,15 @@ class MainWindow(QMainWindow):
 
     def create_options_tab(self):
         options_layout = QVBoxLayout()
-        options_checkboxes_layout, checkboxes = self.create_checkboxes_widget(CODING_STANDARDS)  # Placeholder for future options
-        options_group = self.create_group_box("Coding Standard", options_checkboxes_layout)
+        options_checkboxes_layout, checkboxes = self.create_checkboxes_widget(CODING_STANDARDS)
+        standard_group = self.create_group_box("Coding Standard", options_checkboxes_layout)
+        add_options_layout, add_options_list = self.create_list_widget(dialog_title="Add Additional Options", label_text="Enter additional option:")
+        add_options_group = self.create_group_box("Additional Options", add_options_layout)
+        self.options_file_name.setText("additional_options.lnt")
 
-        options_layout.addWidget(options_group)
+        options_layout.addWidget(standard_group)
+        options_layout.addWidget(add_options_group)
+        options_layout.addLayout(self.create_layout_row("Options File Name:", self.options_file_name))
         self.options_layout.addLayout(options_layout)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
@@ -355,6 +363,66 @@ class MainWindow(QMainWindow):
             layout.addWidget(checkbox, i // 4, i % 4)  # Arrange checkboxes in a grid with 3 columns
         return layout, checkboxes
 
+    def create_list_widget(self, dialog_title="Add Item", label_text="Enter item:"):
+        layout = QVBoxLayout()
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        options_list = QListWidget()
+
+        add_button = QPushButton("+")
+        remove_button = QPushButton("-")
+        add_button.setFixedSize(30, 30)
+        remove_button.setFixedSize(30, 30)
+        add_button.setStyleSheet("color: green; font-size: 18px; font-weight: bold;")
+        remove_button.setStyleSheet("color: red; font-size: 18px; font-weight: bold;")
+
+        add_button.clicked.connect(lambda: self.add_item_to_list(dialog_title, label_text, options_list))
+        remove_button.clicked.connect(lambda: self.remove_selected_item_from_list(options_list))
+
+        button_layout.addWidget(add_button)
+        button_layout.addWidget(remove_button)
+
+        layout.addLayout(button_layout)
+        layout.addWidget(options_list)
+
+        return layout, options_list
+
+    def add_item_to_list(self, dialog_title="Add Item", label_text="Enter item:", options_list=None):
+        dialog = QDialog(self)
+        dialog.setWindowTitle(dialog_title)
+
+        layout = QVBoxLayout(dialog)
+
+        layout.addWidget(QLabel(label_text))
+
+        path_edit = QLineEdit()
+        layout.addWidget(path_edit)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        layout.addWidget(buttons)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            path = path_edit.text().strip()
+
+            if path:
+                options_list.addItem(path)
+
+    def remove_selected_item_from_list(self, options_list):
+        current_item = options_list.currentItem()
+
+        if current_item:
+            options_list.takeItem(
+                options_list.row(current_item)
+            )
+    
     def go_to_next_tab(self):
         current_index = self.tabs.currentIndex()
         if current_index < self.tabs.count() - 1:
