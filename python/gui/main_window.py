@@ -171,28 +171,33 @@ class MainWindow(QMainWindow):
 
     # Function to create layouts for the GUI to unclutter the __init__ function.
     def create_layouts(self):
-        self.pclp_layout = QFormLayout()
-        self.compiler_layout = QFormLayout()
+        self.pclp_layout = QVBoxLayout()
+        self.compiler_layout = QVBoxLayout()
 
         # Create layout for each row of widgets, including labels and browse buttons where applicable.
         # Starting with the PC-lint Plus path and config file, followed by programming language selection for the first tab.
-        self.pclp_layout.addRow(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
-        self.pclp_layout.addRow(self.create_layout_row("PC-lint Plus Config File:", self.pclp_config_path, browse=True, is_folder=False))
-        self.pclp_layout.addRow(self.create_layout_row("Programming Language:", self.prog_language))
+        self.pclp_layout.addLayout(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
+        self.pclp_layout.addLayout(self.create_layout_row("PC-lint Plus Config File:", self.pclp_config_path, browse=True, is_folder=False))
+        self.pclp_layout.addLayout(self.create_layout_row("Programming Language:", self.prog_language))
 
         # Next tab has compiler family selection, compiler binary path, lint output location and name, and additional options and the config button.
-        self.compiler_layout.addRow(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
-        self.compiler_layout.addRow(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
-        self.compiler_layout.addRow(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
-        self.compiler_layout.addRow(self.create_layout_row("Lint Output Name:", self.lint_output_name))
-        self.compiler_layout.addRow(self.create_layout_row("Additional Options:", self.additional_options))
+        self.compiler_layout.addLayout(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
+        self.compiler_layout.addLayout(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
+        self.compiler_layout.addLayout(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
+        self.compiler_layout.addLayout(self.create_layout_row("Lint Output Name:", self.lint_output_name))
+        self.compiler_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_options))
 
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
         generate_button_layout.addWidget(self.button)
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
-        self.compiler_layout.addRow(generate_button_layout)
+        #self.compiler_layout.addRow(generate_button_layout)
+        
+        self.pclp_layout.addStretch()
+        self.compiler_layout.addStretch() 
+        self.pclp_layout.addLayout(self.create_navigation_buttons(show_previous=False, show_next=True))
+        self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True)) 
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
@@ -234,7 +239,7 @@ class MainWindow(QMainWindow):
         button.setCheckable(True)
         if function is not None:
             button.clicked.connect(function)
-        button.setFixedWidth(160)  # Set a fixed width for the button
+        #button.setFixedWidth(160)  Useful for generate button which is not used currently
         return button
 
     # This function creates a "Browse..." button that opens a file or folder dialog when clicked, depending on the is_folder parameter.
@@ -267,6 +272,34 @@ class MainWindow(QMainWindow):
         if browse:
             layout.addWidget(self.create_browse_button_widget(widget, is_folder))
         return layout
+
+    # Create buttons to go to next or previous tab
+    def create_navigation_buttons(self, show_previous=True, show_next=True):
+        layout = QHBoxLayout()
+        if show_previous:
+            previous_button = QPushButton("Previous")
+            previous_button.clicked.connect(self.go_to_previous_tab)
+            layout.addWidget(previous_button)
+
+        layout.addStretch()
+
+        if show_next:
+            next_button = QPushButton("Next")
+            next_button.clicked.connect(self.go_to_next_tab)
+            layout.addWidget(next_button)
+
+        return layout
+
+    def go_to_next_tab(self):
+        current_index = self.tabs.currentIndex()
+        if current_index < self.tabs.count() - 1:
+            self.tabs.setCurrentIndex(current_index + 1)
+
+    def go_to_previous_tab(self):
+        current_index = self.tabs.currentIndex()
+
+        if current_index > 0:
+            self.tabs.setCurrentIndex(current_index - 1)
 
     # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
     def on_button_clicked_generate_config(self):
