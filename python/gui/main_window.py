@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QTabWidget,
     QMenu,
+    QCheckBox,
+    QGroupBox,
 )
 from PySide6.QtCore import QSize
 import sys
@@ -96,7 +98,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PC-lint Plus Configurator")
-        self.setFixedSize(QSize(650, 300))
+        self.setFixedSize(QSize(650, 400))
 
         # Creating widgets for the GUI
         self.create_widgets()
@@ -120,7 +122,7 @@ class MainWindow(QMainWindow):
         self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
 
         # Combobox widgets
-        self.prog_language = self.create_combobox_widget(["C", "C++", "Mixed C/C++"])
+        self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
 
         # Button widgets
         self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked_generate_config)
@@ -173,20 +175,11 @@ class MainWindow(QMainWindow):
     def create_layouts(self):
         self.pclp_layout = QVBoxLayout()
         self.compiler_layout = QVBoxLayout()
+        self.options_layout = QVBoxLayout()
 
-        # Create layout for each row of widgets, including labels and browse buttons where applicable.
-        # Starting with the PC-lint Plus path and config file, followed by programming language selection for the first tab.
-        self.pclp_layout.addLayout(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
-        self.pclp_layout.addLayout(self.create_layout_row("PC-lint Plus Config File:", self.pclp_config_path, browse=True, is_folder=False))
-        self.pclp_layout.addLayout(self.create_layout_row("Programming Language:", self.prog_language))
-
-        # Next tab has compiler family selection, compiler binary path, lint output location and name, and additional options and the config button.
-        self.compiler_layout.addLayout(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
-        self.compiler_layout.addLayout(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
-        self.compiler_layout.addLayout(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
-        self.compiler_layout.addLayout(self.create_layout_row("Lint Output Name:", self.lint_output_name))
-        self.compiler_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_options))
-
+        self.create_pclp_tab()
+        self.create_compiler_tab()
+        
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
@@ -214,6 +207,38 @@ class MainWindow(QMainWindow):
         container.setLayout(container_layout)
 
         self.setCentralWidget(container)
+
+    def create_pclp_tab(self):
+        pclp_layout = QVBoxLayout()
+        pclp_paths_layout = QVBoxLayout()
+
+        pclp_paths_layout.addLayout(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
+        pclp_paths_layout.addLayout(self.create_layout_row("PC-lint Plus Config File:", self.pclp_config_path, browse=True, is_folder=False))
+        pclp_paths_group = self.create_group_box("PC-lint Plus Paths", pclp_paths_layout)
+
+        pclp_layout.addWidget(pclp_paths_group)
+        pclp_layout.addLayout(self.create_layout_row("Programming Language:", self.prog_language))
+
+        self.pclp_layout.addLayout(pclp_layout)
+
+    def create_compiler_tab(self):
+        compiler_layout = QVBoxLayout()
+        compiler_info_layout = QVBoxLayout()
+        lnt_files_layout = QVBoxLayout()
+
+        compiler_info_layout.addLayout(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
+        compiler_info_layout.addLayout(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
+        compiler_info_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_options))
+        compiler_info_group = self.create_group_box("Compiler", compiler_info_layout)
+
+        lnt_files_layout.addLayout(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
+        lnt_files_layout.addLayout(self.create_layout_row("Lint Output Name:", self.lint_output_name))
+        lnt_files_group = self.create_group_box("Lint Output Files", lnt_files_layout)
+
+        compiler_layout.addWidget(compiler_info_group)
+        compiler_layout.addWidget(lnt_files_group)
+
+        self.compiler_layout.addLayout(compiler_layout)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
     def create_line_widgets(self, placeholder_texts="", browse_type=None):
@@ -289,6 +314,12 @@ class MainWindow(QMainWindow):
             layout.addWidget(next_button)
 
         return layout
+
+    def create_group_box(self, title, layout):
+        group_box = QGroupBox(title)
+        if layout is not None:
+            group_box.setLayout(layout)
+        return group_box
 
     def go_to_next_tab(self):
         current_index = self.tabs.currentIndex()
