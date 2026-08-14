@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QMenu,
     QCheckBox,
     QGroupBox,
+    QListWidget,
+    QGridLayout
 )
 from PySide6.QtCore import QSize
 import sys
@@ -94,11 +96,24 @@ MVSC_COMPILERS = [
     "vs2005_64",
     ]
 
+CODING_STANDARDS = [
+    "MISRA C:2004",
+    "MISRA C:2012",
+    "MISRA C:2023",
+    "MISRA C:2025",
+    "MISRA C++:2008",
+    "BARR-C:2018",
+    "CERT C",
+    "CWE",
+    "AUTOSAR C++:2017",
+    "AUTOSAR C++:2019",
+    ]
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PC-lint Plus Configurator")
-        self.setFixedSize(QSize(650, 400))
+        self.setFixedSize(QSize(650, 500))
 
         # Creating widgets for the GUI
         self.create_widgets()
@@ -179,7 +194,8 @@ class MainWindow(QMainWindow):
 
         self.create_pclp_tab()
         self.create_compiler_tab()
-        
+        self.create_options_tab()
+
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
@@ -190,14 +206,15 @@ class MainWindow(QMainWindow):
         self.pclp_layout.addStretch()
         self.compiler_layout.addStretch() 
         self.pclp_layout.addLayout(self.create_navigation_buttons(show_previous=False, show_next=True))
-        self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True)) 
+        self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
+        self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=False))
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
         self.tabs = QTabWidget()
         self.create_tab_widget("1. PCLP", self.pclp_layout)
         self.create_tab_widget("2. Compiler", self.compiler_layout)
-        self.create_tab_widget("3. Options", QFormLayout())  # Placeholder for future options tab
+        self.create_tab_widget("3. Options", self.options_layout)
 
     # This function creates the main window layout, adding the tabs to the central widget of the QMainWindow.
     def create_window_layout(self):
@@ -239,6 +256,14 @@ class MainWindow(QMainWindow):
         compiler_layout.addWidget(lnt_files_group)
 
         self.compiler_layout.addLayout(compiler_layout)
+
+    def create_options_tab(self):
+        options_layout = QVBoxLayout()
+        options_checkboxes_layout, checkboxes = self.create_checkboxes_widget(CODING_STANDARDS)  # Placeholder for future options
+        options_group = self.create_group_box("Coding Standard", options_checkboxes_layout)
+
+        options_layout.addWidget(options_group)
+        self.options_layout.addLayout(options_layout)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
     def create_line_widgets(self, placeholder_texts="", browse_type=None):
@@ -320,6 +345,15 @@ class MainWindow(QMainWindow):
         if layout is not None:
             group_box.setLayout(layout)
         return group_box
+
+    def create_checkboxes_widget(self, options):
+        checkboxes = []
+        layout = QGridLayout()
+        for i, option in enumerate(options):
+            checkbox = QCheckBox(option)
+            checkboxes.append(checkbox)
+            layout.addWidget(checkbox, i // 4, i % 4)  # Arrange checkboxes in a grid with 3 columns
+        return layout, checkboxes
 
     def go_to_next_tab(self):
         current_index = self.tabs.currentIndex()
