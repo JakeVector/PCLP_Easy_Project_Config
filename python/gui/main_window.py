@@ -12,44 +12,86 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QTabWidget,
     QMenu,
-    QPushButton,
 )
 from PySide6.QtCore import QSize
 import sys
 from pathlib import Path
 
 IAR_COMPILERS = [
-        "iar-430",
-        "iar-78k",
-        "iar-8051",
-        "iar-arm",
-        "iar-avr",
-        "iar-avr32",
-        "iar-cf",
-        "iar-cr16c",
-        "iar-h8",
-        "iar-hcs12",
-        "iar-m16c",
-        "iar-m32c",
-        "iar-maxq",
-        "iar-r32c",
-        "iar-rh850",
-        "iar-r178",
-        "iar-rx",
-        "iar-s08",
-        "iar-sam8",
-        "iar-v850",
-        ]
+    "iar-430",
+    "iar-78k",
+    "iar-8051",
+    "iar-arm",
+    "iar-avr",
+    "iar-avr32",
+    "iar-cf",
+    "iar-cr16c",
+    "iar-h8",
+    "iar-hcs12",
+    "iar-m16c",
+    "iar-m32c",
+    "iar-maxq",
+    "iar-r32c",
+    "iar-rh850",
+    "iar-r178",
+    "iar-rx",
+    "iar-s08",
+    "iar-sam8",
+    "iar-v850",
+    ]
 
 KEIL_COMPILERS = [
-        "keil_armcc",
-        "keil_armclang",
-        "keil_c51",
-        ]
+    "keil_armcc",
+    "keil_armclang",
+    "keil_c51",
+    ]
 
-# You need one (and only one) QApplication instance per application.
-# Pass in sys.argv to allow command line arguments for your app.
-# If you know you won't use command line arguments QApplication([]) works too.
+HIGHTEC_COMPILERS = [
+    "hightec_TC2x_TC3x",
+    "hightec_TC4x",
+    "hightec_arm",
+    ]
+
+CCS_COMPILERS = [
+    "ti_cl430",
+    "ti_cl2000",
+    "ti_cl6x",
+    "ti_armcl",
+    "ti_armclang",
+    ]
+
+S32DS_COMPILERS = [
+    "s32ds_arm",
+    "s32ds_ppc",
+    ]
+
+MICROCHIP_COMPILERS = [
+    "microchip_xc8",
+    "microchip_xc16",
+    "microchip_xc32",
+    ]
+
+MVSC_COMPILERS = [
+    "vs2022",
+    "vs2022_64",
+    "vs2019",
+    "vs2019_64",
+    "vs2017",
+    "vs2017_64",
+    "vs2015",
+    "vs2015_64",
+    "vs2013",
+    "vs2013_64",
+    "vs2012",
+    "vs2012_64",
+    "vs2010",
+    "vs2010_64",
+    "vs2008",
+    "vs2008_64",
+    "vs2005",
+    "vs2005_64",
+    ]
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -101,9 +143,30 @@ class MainWindow(QMainWindow):
         for compiler in KEIL_COMPILERS:
             self.add_selection_action(keil_menu, compiler)
 
-        self.add_selection_action(compiler_menu, "GHS")
+        self.add_selection_action(compiler_menu, "ghs")
 
-        self.add_selection_action(compiler_menu, "msvc")
+        hightec_menu = compiler_menu.addMenu("HighTec")
+        for compiler in HIGHTEC_COMPILERS:
+            self.add_selection_action(hightec_menu, compiler)
+
+        self.add_selection_action(compiler_menu, "tasking")
+
+        ccs_menu = compiler_menu.addMenu("CCS")
+        for compiler in CCS_COMPILERS:
+            self.add_selection_action(ccs_menu, compiler)
+
+        s32ds_menu = compiler_menu.addMenu("S32DS")
+        for compiler in S32DS_COMPILERS:
+            self.add_selection_action(s32ds_menu, compiler)
+
+        microchip_menu = compiler_menu.addMenu("Microchip")
+        for compiler in MICROCHIP_COMPILERS:
+            self.add_selection_action(microchip_menu, compiler)
+
+        mvsc_menu = compiler_menu.addMenu("MSVC")
+        for compiler in MVSC_COMPILERS:
+            self.add_selection_action(mvsc_menu, compiler)
+
         self.compiler_button.setMenu(compiler_menu)
 
     # Function to create layouts for the GUI to unclutter the __init__ function.
@@ -134,8 +197,9 @@ class MainWindow(QMainWindow):
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
         self.tabs = QTabWidget()
-        self.create_tab_widget("PCLP", self.pclp_layout)
-        self.create_tab_widget("Compiler", self.compiler_layout)
+        self.create_tab_widget("1. PCLP", self.pclp_layout)
+        self.create_tab_widget("2. Compiler", self.compiler_layout)
+        self.create_tab_widget("3. Options", QFormLayout())  # Placeholder for future options tab
 
     # This function creates the main window layout, adding the tabs to the central widget of the QMainWindow.
     def create_window_layout(self):
@@ -160,8 +224,6 @@ class MainWindow(QMainWindow):
 
     # This function creates a QComboBox for selecting the compiler family, with options for GCC, Clang, and MSVC.
     def create_combobox_widget(self, items=None):
-        if items is None:
-            return
         combo_box = QComboBox(self)
         combo_box.addItems(items)
         return combo_box
@@ -195,16 +257,16 @@ class MainWindow(QMainWindow):
 
     # This function creates a layout row that includes a label, a widget (like QLineEdit or QComboBox), and optionally a "Browse..." button.
     def create_layout_row(self, label_text="", widget=None, browse=False, is_folder=False):
-            if widget is None:
-                return
-            layout = QHBoxLayout()
-            label = QLabel(label_text)
-            label.setFixedWidth(135)  # Set a fixed width for the label to align with other labels
-            layout.addWidget(label)
-            layout.addWidget(widget)
-            if browse:
-                layout.addWidget(self.create_browse_button_widget(widget, is_folder))
-            return layout
+        if widget is None:
+            return
+        layout = QHBoxLayout()
+        label = QLabel(label_text)
+        label.setFixedWidth(135)  # Set a fixed width for the label to align with other labels
+        layout.addWidget(label)
+        layout.addWidget(widget)
+        if browse:
+            layout.addWidget(self.create_browse_button_widget(widget, is_folder))
+        return layout
 
     # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
     def on_button_clicked_generate_config(self):
@@ -219,7 +281,6 @@ class MainWindow(QMainWindow):
 
         compiler_selection = self.selected_compiler if self.selected_compiler else "No compiler selected"
         
-
         print(pclp_path)
         print(pclp_config)
         print(language)
@@ -271,6 +332,9 @@ class MainWindow(QMainWindow):
             line_edit_widget.setStyleSheet("")
             line_edit_widget.setToolTip("")
 
+# You need one (and only one) QApplication instance per application.
+# Pass in sys.argv to allow command line arguments for your app.
+# If you know you won't use command line arguments QApplication([]) works too.
 def create_window():
     app = QApplication(sys.argv)
 
