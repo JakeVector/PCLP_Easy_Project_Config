@@ -60,12 +60,15 @@ class MainWindow(QMainWindow):
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
         self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
         self.options_file_name = self.create_line_widgets("Enter file name for additional options (optional)")
+        self.imposter_log_path = self.create_line_widgets("Enter path for imposter log file", browse_type="file")
+        self.json_compilation_database_path = self.create_line_widgets("Enter path for JSON compilation database", browse_type="file")
+        self.project_lnt_name = self.create_line_widgets("Enter project .lnt name")
 
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
 
         # Button widgets
-        self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked_generate_config)
+        self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked_generate_config, fixedWidth=True)
 
     def create_menus(self):
         self.selected_compiler = None  # Initialize selected compiler variable
@@ -116,10 +119,12 @@ class MainWindow(QMainWindow):
         self.pclp_layout = QVBoxLayout()
         self.compiler_layout = QVBoxLayout()
         self.options_layout = QVBoxLayout()
+        self.project_layout = QVBoxLayout()
 
         self.create_pclp_tab()
         self.create_compiler_tab()
         self.create_options_tab()
+        self.create_project_tab()
 
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
@@ -133,6 +138,7 @@ class MainWindow(QMainWindow):
         self.pclp_layout.addLayout(self.create_navigation_buttons(show_previous=False, show_next=True))
         self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
+        self.project_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
@@ -140,6 +146,7 @@ class MainWindow(QMainWindow):
         self.create_tab_widget("1. PCLP", self.pclp_layout)
         self.create_tab_widget("2. Compiler", self.compiler_layout)
         self.create_tab_widget("3. Options", self.options_layout)
+        self.create_tab_widget("4. Project", self.project_layout)
 
     # This function creates the main window layout, adding the tabs to the central widget of the QMainWindow.
     def create_window_layout(self):
@@ -195,6 +202,52 @@ class MainWindow(QMainWindow):
         options_layout.addLayout(self.create_layout_row("Options File Name:", self.options_file_name))
         self.options_layout.addLayout(options_layout)
 
+    def create_project_tab(self):
+        inner_tabs = QTabWidget()
+        project_layout = QVBoxLayout()
+
+        cmd_line_tab = QWidget()
+        cmd_line_layout = QVBoxLayout()
+        cmd_line_layout.addLayout(self.create_layout_row("Imposter Log:", self.imposter_log_path, browse=True, is_folder=False))
+        cmd_line_layout.addLayout(self.create_layout_row("Compiler JSON:", self.json_compilation_database_path, browse=True, is_folder=False))
+        cmd_line_tab.setLayout(cmd_line_layout)
+
+        ide_build_group = QGroupBox("Parse Command Line")
+        include_flag = self.create_layout_row("Include Flag:", self.create_line_widgets("Enter include flag (e.g., -I)"))
+        define_flag = self.create_layout_row("Define Flag:", self.create_line_widgets("Enter define flag (e.g., -D)"))
+        parse_button = self.create_generic_button_widget("Parse Command Line", function=self.on_click_parse_command_line, fixedWidth=True)
+        parse_button_layout = QHBoxLayout()
+        parse_button_layout.addStretch()  # Add stretch to push the button to the right
+        parse_button_layout.addWidget(parse_button)
+        parse_button_layout.addStretch() 
+        parse_command_line_layout = QHBoxLayout()
+        parse_command_line_layout.addLayout(include_flag)
+        parse_command_line_layout.addLayout(define_flag)
+
+        ide_build_layout = QVBoxLayout()
+        ide_build_layout.addLayout(parse_command_line_layout)
+        ide_build_layout.addLayout(parse_button_layout)
+        ide_build_group.setLayout(ide_build_layout)
+
+        inner_tabs.addTab(cmd_line_tab, "Command Line")
+        inner_tabs.addTab(ide_build_group, "IDE Build")
+
+        extensions_layout = QHBoxLayout()
+        c_ext_layout, c_ext_list = self.create_list_widget(dialog_title="Add C File Extensions", label_text="Enter additional C extensions:")
+        c_ext_group = self.create_group_box("C File Extensions", c_ext_layout)
+        cpp_ext_layout, cpp_ext_list = self.create_list_widget(dialog_title="Add C++ File Extensions", label_text="Enter additional C++ extensions:")
+        cpp_ext_group = self.create_group_box("C++ File Extensions", cpp_ext_layout)
+        extensions_layout.addWidget(c_ext_group)
+        extensions_layout.addWidget(cpp_ext_group)
+
+        self.project_lnt_name.setText("project.lnt")
+        project_lnt_name = self.create_layout_row("Project .lnt Name:", self.project_lnt_name)
+
+        project_layout.addWidget(inner_tabs)
+        project_layout.addLayout(extensions_layout)
+        project_layout.addLayout(project_lnt_name)
+        self.project_layout.addLayout(project_layout)
+
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
     def create_line_widgets(self, placeholder_texts="", browse_type=None):
         line_edit_widget = QLineEdit(self)
@@ -214,12 +267,13 @@ class MainWindow(QMainWindow):
         return combo_box
 
     # This function creates a QPushButton that is checkable and connects its clicked signal to the on_button_clicked function.
-    def create_generic_button_widget(self, placeholder_texts="", function=None):
+    def create_generic_button_widget(self, placeholder_texts="", function=None, fixedWidth=False):
         button = QPushButton(placeholder_texts)
         button.setCheckable(True)
         if function is not None:
             button.clicked.connect(function)
-        #button.setFixedWidth(160)  Useful for generate button which is not used currently
+        if fixedWidth:
+            button.setFixedWidth(160)
         return button
 
     # This function creates a "Browse..." button that opens a file or folder dialog when clicked, depending on the is_folder parameter.
@@ -377,6 +431,10 @@ class MainWindow(QMainWindow):
         print(lint_output_name)
         print(additional_options)
         print(compiler_selection)
+
+    def on_click_parse_command_line(self):
+        # Empty for now
+        return
 
     # This function opens a folder selection dialog and sets the selected folder path to the provided QLineEdit widget.
     def browse_for_folder(self, line_edit_widget):
