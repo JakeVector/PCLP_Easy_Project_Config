@@ -233,9 +233,9 @@ class MainWindow(QMainWindow):
         inner_tabs.addTab(ide_build_group, "IDE Build")
 
         extensions_layout = QHBoxLayout()
-        c_ext_layout, c_ext_list = self.create_list_widget(dialog_title="Add C File Extensions", label_text="Enter additional C extensions:")
+        c_ext_layout, c_ext_list = self.create_list_widget(dialog_title="Add C File Extensions", label_text="Enter additional C extensions:", items=[".c"])
         c_ext_group = self.create_group_box("C File Extensions", c_ext_layout)
-        cpp_ext_layout, cpp_ext_list = self.create_list_widget(dialog_title="Add C++ File Extensions", label_text="Enter additional C++ extensions:")
+        cpp_ext_layout, cpp_ext_list = self.create_list_widget(dialog_title="Add C++ File Extensions", label_text="Enter additional C++ extensions:", items=[".cpp", ".cxx", ".cc"])
         cpp_ext_group = self.create_group_box("C++ File Extensions", cpp_ext_layout)
         extensions_layout.addWidget(c_ext_group)
         extensions_layout.addWidget(cpp_ext_group)
@@ -339,7 +339,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(checkbox, i // 4, i % 4)  # Arrange checkboxes in a grid with 3 columns
         return layout, checkboxes
 
-    def create_list_widget(self, dialog_title="Add Item", label_text="Enter item:"):
+    def create_list_widget(self, dialog_title="Add Item", label_text="Enter item:", items=None):
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -360,6 +360,11 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(remove_button)
 
         layout.addLayout(button_layout)
+
+        if items:
+            for item in items:
+                options_list.addItem(item)
+
         layout.addWidget(options_list)
 
         return layout, options_list
