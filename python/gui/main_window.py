@@ -120,11 +120,13 @@ class MainWindow(QMainWindow):
         self.compiler_layout = QVBoxLayout()
         self.options_layout = QVBoxLayout()
         self.project_layout = QVBoxLayout()
+        self.analysis_layout = QVBoxLayout()
 
         self.create_pclp_tab()
         self.create_compiler_tab()
         self.create_options_tab()
         self.create_project_tab()
+        self.create_analysis_tab()
 
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
@@ -139,6 +141,7 @@ class MainWindow(QMainWindow):
         self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.project_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
+        self.analysis_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
@@ -147,6 +150,7 @@ class MainWindow(QMainWindow):
         self.create_tab_widget("2. Compiler", self.compiler_layout)
         self.create_tab_widget("3. Options", self.options_layout)
         self.create_tab_widget("4. Project", self.project_layout)
+        self.create_tab_widget("5. Analysis", self.analysis_layout)
 
     # This function creates the main window layout, adding the tabs to the central widget of the QMainWindow.
     def create_window_layout(self):
@@ -247,6 +251,11 @@ class MainWindow(QMainWindow):
         project_layout.addLayout(extensions_layout)
         project_layout.addLayout(project_lnt_name)
         self.project_layout.addLayout(project_layout)
+
+    def create_analysis_tab(self):
+        analysis_layout = QVBoxLayout()
+        analysis_layout.addLayout(self.create_layout_row("Analysis Placeholder:", self.create_line_widgets("This is a placeholder for future analysis features.")))
+        self.analysis_layout.addLayout(analysis_layout)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
     def create_line_widgets(self, placeholder_texts="", browse_type=None):
