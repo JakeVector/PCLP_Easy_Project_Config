@@ -63,9 +63,12 @@ class MainWindow(QMainWindow):
         self.imposter_log_path = self.create_line_widgets("Enter path for imposter log file", browse_type="file")
         self.json_compilation_database_path = self.create_line_widgets("Enter path for JSON compilation database", browse_type="file")
         self.project_lnt_name = self.create_line_widgets("Enter project .lnt name")
+        self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="file")
+        self.output_file_name = self.create_line_widgets("Enter output file name")
 
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
+        self.output_format = self.create_combobox_widget(["Select Output Format", "Text", "HTML", "XML", "SARIF"])
 
         # Button widgets
         self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked_generate_config, fixedWidth=True)
@@ -136,7 +139,11 @@ class MainWindow(QMainWindow):
         #self.compiler_layout.addRow(generate_button_layout)
         
         self.pclp_layout.addStretch()
-        self.compiler_layout.addStretch() 
+        self.compiler_layout.addStretch()
+        self.project_layout.addStretch()
+        self.options_layout.addStretch()
+        self.analysis_layout.addStretch()
+
         self.pclp_layout.addLayout(self.create_navigation_buttons(show_previous=False, show_next=True))
         self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
@@ -216,7 +223,7 @@ class MainWindow(QMainWindow):
         cmd_line_layout.addLayout(self.create_layout_row("Compiler JSON:", self.json_compilation_database_path, browse=True, is_folder=False))
         cmd_line_tab.setLayout(cmd_line_layout)
 
-        ide_build_group = QGroupBox("Parse Command Line")
+        ide_build_group = QGroupBox("IDE Build")
         include_flag = self.create_layout_row("Include Flag:", self.create_line_widgets("Enter include flag (e.g., -I)"))
         define_flag = self.create_layout_row("Define Flag:", self.create_line_widgets("Enter define flag (e.g., -D)"))
         parse_button = self.create_generic_button_widget("Parse Command Line", function=self.on_click_parse_command_line, fixedWidth=True)
@@ -254,7 +261,14 @@ class MainWindow(QMainWindow):
 
     def create_analysis_tab(self):
         analysis_layout = QVBoxLayout()
-        analysis_layout.addLayout(self.create_layout_row("Analysis Placeholder:", self.create_line_widgets("This is a placeholder for future analysis features.")))
+        output_layout = QVBoxLayout()
+
+        output_layout.addLayout(self.create_layout_row("Output Format:", self.output_format))
+        output_layout.addLayout(self.create_layout_row("Output File Path:", self.output_file_path_folder, browse=True, is_folder=True))
+        output_layout.addLayout(self.create_layout_row("Output File Name:", self.output_file_name))
+        output_group = self.create_group_box("Analysis Output", output_layout)
+
+        analysis_layout.addWidget(output_group)
         self.analysis_layout.addLayout(analysis_layout)
 
     # This function creates QLineEdit widgets for entering the paths to PC-lint Plus, the compiler binary, and the lint output name.
@@ -287,11 +301,10 @@ class MainWindow(QMainWindow):
 
     # This function creates a "Browse..." button that opens a file or folder dialog when clicked, depending on the is_folder parameter.
     def create_browse_button_widget(self, line_edit_widget, is_folder=True):
+        button = QPushButton("Browse...")
         if is_folder:
-            button = QPushButton("Browse...")
             button.clicked.connect(lambda: self.browse_for_folder(line_edit_widget))
         else:
-            button = QPushButton("Browse...")
             button.clicked.connect(lambda: self.browse_for_file(line_edit_widget))
         return button
 
