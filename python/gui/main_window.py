@@ -202,9 +202,9 @@ class MainWindow(QMainWindow):
 
     def create_options_tab(self):
         options_layout = QVBoxLayout()
-        options_checkboxes_layout, checkboxes = self.create_checkboxes_widget(CODING_STANDARDS)
+        options_checkboxes_layout, self.code_std_checkboxes = self.create_checkboxes_widget(CODING_STANDARDS)
         standard_group = self.create_group_box("Coding Standard", options_checkboxes_layout)
-        add_options_layout, add_options_list = self.create_list_widget(dialog_title="Add Additional Options", label_text="Enter additional option:")
+        add_options_layout, self.add_options_list = self.create_list_widget(dialog_title="Add Additional Options", label_text="Enter additional option:")
         add_options_group = self.create_group_box("Additional Options", add_options_layout)
         self.options_file_name.setText("additional_options.lnt")
 
@@ -244,9 +244,9 @@ class MainWindow(QMainWindow):
         inner_tabs.addTab(ide_build_group, "IDE Build")
 
         extensions_layout = QHBoxLayout()
-        c_ext_layout, c_ext_list = self.create_list_widget(dialog_title="Add C File Extensions", label_text="Enter additional C extensions:", items=[".c"])
+        c_ext_layout, self.c_ext_list = self.create_list_widget(dialog_title="Add C File Extensions", label_text="Enter additional C extensions:", items=[".c"])
         c_ext_group = self.create_group_box("C File Extensions", c_ext_layout)
-        cpp_ext_layout, cpp_ext_list = self.create_list_widget(dialog_title="Add C++ File Extensions", label_text="Enter additional C++ extensions:", items=[".cpp", ".cxx", ".cc"])
+        cpp_ext_layout, self.cpp_ext_list = self.create_list_widget(dialog_title="Add C++ File Extensions", label_text="Enter additional C++ extensions:", items=[".cpp", ".cxx", ".cc"])
         cpp_ext_group = self.create_group_box("C++ File Extensions", cpp_ext_layout)
         extensions_layout.addWidget(c_ext_group)
         extensions_layout.addWidget(cpp_ext_group)
@@ -292,7 +292,6 @@ class MainWindow(QMainWindow):
     # This function creates a QPushButton that is checkable and connects its clicked signal to the on_button_clicked function.
     def create_generic_button_widget(self, placeholder_texts="", function=None, fixedWidth=False):
         button = QPushButton(placeholder_texts)
-        button.setCheckable(True)
         if function is not None:
             button.clicked.connect(function)
         if fixedWidth:
@@ -310,7 +309,7 @@ class MainWindow(QMainWindow):
 
     # This function creates a QTabWidget for the GUI, setting its title and layout.
     def create_tab_widget(self, tab_name="", layout=None):
-        tab_widget = QTabWidget()
+        tab_widget = QWidget()
         tab_widget.setWindowTitle(tab_name)
         if layout is not None:
             tab_widget.setLayout(layout)
