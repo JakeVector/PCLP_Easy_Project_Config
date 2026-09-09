@@ -73,6 +73,23 @@ MVSC_COMPILERS = [
     "vs2005_64",
     ]
 
+STANDALONE_COMPILERS = [
+    "gcc",
+    "clang",
+    "ghs",
+    "tasking",
+    ]
+
+COMPILER_GROUPS = {
+    "IAR": IAR_COMPILERS,
+    "Keil": KEIL_COMPILERS,
+    "HighTec": HIGHTEC_COMPILERS,
+    "CCS": CCS_COMPILERS,
+    "S32DS": S32DS_COMPILERS,
+    "Microchip": MICROCHIP_COMPILERS,
+    "MSVC": MVSC_COMPILERS,
+}
+
 CODING_STANDARDS = {
     "MISRA C:2004": "au-misra2.lnt",
     "MISRA C:2012": "au-misra3.lnt",

@@ -23,14 +23,9 @@ from PySide6.QtCore import QSize
 import sys
 from pathlib import Path
 from gui.constants import (
-    IAR_COMPILERS,
-    KEIL_COMPILERS,
-    HIGHTEC_COMPILERS,
-    CCS_COMPILERS,
-    S32DS_COMPILERS,
-    MICROCHIP_COMPILERS,
-    MVSC_COMPILERS,
+    COMPILER_GROUPS,
     CODING_STANDARDS,
+    STANDALONE_COMPILERS,
 )
 
 class MainWindow(QMainWindow):
@@ -76,44 +71,16 @@ class MainWindow(QMainWindow):
     def create_menus(self):
         self.selected_compiler = None  # Initialize selected compiler variable
         self.compiler_button = self.create_generic_button_widget("Select Compiler")
-        
+
         compiler_menu = QMenu("Compiler", self)
 
-        self.add_selection_action(compiler_menu, "gcc")
-        self.add_selection_action(compiler_menu, "clang")
+        for compiler in STANDALONE_COMPILERS:
+            self.add_selection_action(compiler_menu, compiler)
 
-        # IAR compilers are grouped under a submenu for better organization.
-        iar_menu = compiler_menu.addMenu("IAR")       
-        for compiler in IAR_COMPILERS:
-            self.add_selection_action(iar_menu, compiler)
-        
-        keil_menu = compiler_menu.addMenu("Keil")
-        for compiler in KEIL_COMPILERS:
-            self.add_selection_action(keil_menu, compiler)
-
-        self.add_selection_action(compiler_menu, "ghs")
-
-        hightec_menu = compiler_menu.addMenu("HighTec")
-        for compiler in HIGHTEC_COMPILERS:
-            self.add_selection_action(hightec_menu, compiler)
-
-        self.add_selection_action(compiler_menu, "tasking")
-
-        ccs_menu = compiler_menu.addMenu("CCS")
-        for compiler in CCS_COMPILERS:
-            self.add_selection_action(ccs_menu, compiler)
-
-        s32ds_menu = compiler_menu.addMenu("S32DS")
-        for compiler in S32DS_COMPILERS:
-            self.add_selection_action(s32ds_menu, compiler)
-
-        microchip_menu = compiler_menu.addMenu("Microchip")
-        for compiler in MICROCHIP_COMPILERS:
-            self.add_selection_action(microchip_menu, compiler)
-
-        mvsc_menu = compiler_menu.addMenu("MSVC")
-        for compiler in MVSC_COMPILERS:
-            self.add_selection_action(mvsc_menu, compiler)
+        for group_name, compilers in COMPILER_GROUPS.items():
+            compiler_group_menu = compiler_menu.addMenu(group_name)
+            for compiler in compilers:
+                self.add_selection_action(compiler_group_menu, compiler)
 
         self.compiler_button.setMenu(compiler_menu)
 
