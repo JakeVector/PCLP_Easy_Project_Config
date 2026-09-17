@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSize
 import sys
 from pathlib import Path
+from config.configuration import Configuration
 from gui.constants import (
     COMPILER_GROUPS,
     CODING_STANDARDS,
@@ -60,7 +61,7 @@ class MainWindow(QMainWindow):
         self.imposter_log_path = self.create_line_widgets("Enter path for imposter log file", browse_type="file")
         self.json_compilation_database_path = self.create_line_widgets("Enter path for JSON compilation database", browse_type="file")
         self.project_lnt_name = self.create_line_widgets("Enter project .lnt name")
-        self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="file")
+        self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="folder")
         self.output_file_name = self.create_line_widgets("Enter output file name")
 
         self.pclp_path.textChanged.connect(self.validate_inputs)
@@ -418,25 +419,8 @@ class MainWindow(QMainWindow):
 
     # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
     def on_button_clicked_generate_config(self):
-        pclp_path = self.pclp_path.text()
-        pclp_config = self.pclp_config_path.text()
-        language = self.prog_language.currentText()
-
-        compiler_binary = self.compiler_binary.text()
-        lint_output_location = self.lint_output_location.text()
-        lint_output_name = self.lint_output_name.text()
-        additional_options = self.additional_options.text()
-
-        compiler_selection = self.selected_compiler if self.selected_compiler else "No compiler selected"
-        
-        print(pclp_path)
-        print(pclp_config)
-        print(language)
-        print(compiler_binary)
-        print(lint_output_location)
-        print(lint_output_name)
-        print(additional_options)
-        print(compiler_selection)
+        config = self.build_configuration()
+        print(config)
 
     def on_click_parse_command_line(self):
         # Empty for now
@@ -501,7 +485,30 @@ class MainWindow(QMainWindow):
             valid = False
         if self.prog_language == "Select Language":
             valid = False
-        return valid
+        self.generate_button.setEnabled(valid)
+
+    def build_configuration(self):
+        return Configuration(
+            pclp_path=self.pclp_path.text(),
+            pclp_config_path=self.pclp_config_path.text(),
+            prog_language=self.prog_language.currentText(),
+            compiler_binary=self.compiler_binary.text(),
+            lint_output_location=self.lint_output_location.text(),
+            lint_output_name=self.lint_output_name.text(),
+            additional_options=self.additional_options.text(),
+            options_file_name=self.options_file_name.text(),
+            selected_compiler=self.selected_compiler,
+            code_standards=self.code_standards.text().split(","),
+            imposter_log=self.imposter_log.text(),
+            json_compilation_database=self.json_compilation_database.text(),
+            include_flags=self.include_flags.text(),
+            define_flags=self.define_flags.text(),
+            project_lnt_name=self.project_lnt_name.text(),
+            c_file_extensions=self.c_file_extensions.text().split(","),
+            cpp_file_extensions=self.cpp_file_extensions.text().split(","),
+            output_file_path_folder=self.output_file_path_folder.text(),
+            output_file_name=self.output_file_name.text()
+        )
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
