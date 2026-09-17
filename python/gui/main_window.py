@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtWidgets import (
     QApplication, 
     QWidget, 
@@ -61,12 +63,22 @@ class MainWindow(QMainWindow):
         self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="file")
         self.output_file_name = self.create_line_widgets("Enter output file name")
 
+        self.pclp_path.textChanged.connect(self.validate_inputs)
+        self.pclp_config_path.textChanged.connect(self.validate_inputs)
+        self.compiler_binary.textChanged.connect(self.validate_inputs)
+        self.lint_output_location.textChanged.connect(self.validate_inputs)
+        self.output_file_path_folder.textChanged.connect(self.validate_inputs)
+
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
         self.output_format = self.create_combobox_widget(["Select Output Format", "Text", "HTML", "XML", "SARIF"])
 
+        self.prog_language.currentIndexChanged.connect(self.validate_inputs)
+        self.output_format.currentIndexChanged.connect(self.validate_inputs)
+
         # Button widgets
-        self.button = self.create_generic_button_widget("Generate Compiler Config", function=self.on_button_clicked_generate_config, fixedWidth=True)
+        self.generate_button = self.create_generic_button_widget("Generate Configuration", function=self.on_button_clicked_generate_config, fixedWidth=True)
+        self.generate_button.setEnabled(False)
 
     def create_menus(self):
         self.selected_compiler = None  # Initialize selected compiler variable
@@ -101,7 +113,7 @@ class MainWindow(QMainWindow):
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
-        generate_button_layout.addWidget(self.button)
+        generate_button_layout.addWidget(self.generate_button)
         generate_button_layout.addStretch()  # Add stretch to push the button to the right
         #self.compiler_layout.addRow(generate_button_layout)
         
@@ -115,7 +127,8 @@ class MainWindow(QMainWindow):
         self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.project_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
-        self.analysis_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
+        self.analysis_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=False))
+        self.analysis_layout.addLayout(generate_button_layout)
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
@@ -450,6 +463,7 @@ class MainWindow(QMainWindow):
     def select_compiler(self, compiler):
         self.selected_compiler = compiler
         self.compiler_button.setText(compiler)
+        self.validate_inputs()
 
     # This function validates the folder path entered in the dialog. If the path doesn't exist, the border turns red and a tooltip is displayed. If the path is valid, the border returns to normal and the tooltip is cleared.
     def validate_folder_path(self, line_edit_widget):
@@ -470,6 +484,24 @@ class MainWindow(QMainWindow):
         else:
             line_edit_widget.setStyleSheet("")
             line_edit_widget.setToolTip("")
+
+    def validate_inputs(self):
+        valid = True
+        if not os.path.isdir(self.pclp_path.text()):
+            valid = False
+        if not os.path.isfile(self.pclp_config_path.text()):
+            valid = False
+        if not os.path.isfile(self.compiler_binary.text()):
+            valid = False
+        if not os.path.isdir(self.lint_output_location.text()):
+            valid = False
+        if not os.path.isdir(self.output_file_path_folder.text()):
+            valid = False
+        if not self.selected_compiler:
+            valid = False
+        if self.prog_language == "Select Language":
+            valid = False
+        return valid
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
