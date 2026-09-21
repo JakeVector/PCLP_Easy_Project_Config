@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QVBoxLayout,
-    QFormLayout,
     QFileDialog,
     QTabWidget,
     QMenu,
@@ -20,6 +19,8 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QDialog,
     QDialogButtonBox,
+    QRadioButton,
+    QButtonGroup,
 )
 from PySide6.QtCore import QSize
 import sys
@@ -56,10 +57,12 @@ class MainWindow(QMainWindow):
         self.compiler_binary = self.create_line_widgets("Enter path to compiler executable", browse_type="file")
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files", browse_type="folder")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
-        self.additional_options = self.create_line_widgets("Enter additional compiler options (optional)")
+        self.additional_compiler_options = self.create_line_widgets("Enter additional compiler options (optional)")
         self.options_file_name = self.create_line_widgets("Enter file name for additional options (optional)")
         self.imposter_log_path = self.create_line_widgets("Enter path for imposter log file", browse_type="file")
         self.json_compilation_database_path = self.create_line_widgets("Enter path for JSON compilation database", browse_type="file")
+        self.include_flag = self.create_line_widgets("Enter include flag (e.g., -I)")
+        self.define_flag = self.create_line_widgets("Enter define flag (e.g., -D)")
         self.project_lnt_name = self.create_line_widgets("Enter project .lnt name")
         self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="folder")
         self.output_file_name = self.create_line_widgets("Enter output file name")
@@ -80,6 +83,15 @@ class MainWindow(QMainWindow):
         # Button widgets
         self.generate_button = self.create_generic_button_widget("Generate Configuration", function=self.on_button_clicked_generate_config, fixedWidth=True)
         self.generate_button.setEnabled(False)
+
+        self.os_windows = QRadioButton("Windows")
+        self.os_windows.setChecked(True)  # Set Windows as the default selected OS
+        self.os_linux = QRadioButton("Linux")
+        self.os_mac = QRadioButton("Mac")
+        self.os_button_group = QButtonGroup()
+        self.os_button_group.addButton(self.os_windows)
+        self.os_button_group.addButton(self.os_linux)
+        self.os_button_group.addButton(self.os_mac)
 
     def create_menus(self):
         self.selected_compiler = None  # Initialize selected compiler variable
@@ -152,11 +164,18 @@ class MainWindow(QMainWindow):
     def create_pclp_tab(self):
         pclp_layout = QVBoxLayout()
         pclp_paths_layout = QVBoxLayout()
+        radio_layout = QHBoxLayout()
+        radio_layout.addWidget(self.os_windows)
+        radio_layout.addWidget(self.os_linux)
+        radio_layout.addWidget(self.os_mac)
 
         pclp_paths_layout.addLayout(self.create_layout_row("PC-lint Plus Path:", self.pclp_path, browse=True, is_folder=True))
         pclp_paths_layout.addLayout(self.create_layout_row("PC-lint Plus Config File:", self.pclp_config_path, browse=True, is_folder=False))
         pclp_paths_group = self.create_group_box("PC-lint Plus Paths", pclp_paths_layout)
 
+        os_group = self.create_group_box("Operating System", radio_layout)
+
+        pclp_layout.addWidget(os_group)
         pclp_layout.addWidget(pclp_paths_group)
         pclp_layout.addLayout(self.create_layout_row("Programming Language:", self.prog_language))
 
@@ -169,7 +188,7 @@ class MainWindow(QMainWindow):
 
         compiler_info_layout.addLayout(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
         compiler_info_layout.addLayout(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
-        compiler_info_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_options))
+        compiler_info_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_compiler_options))
         compiler_info_group = self.create_group_box("Compiler", compiler_info_layout)
 
         lnt_files_layout.addLayout(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
@@ -183,7 +202,7 @@ class MainWindow(QMainWindow):
 
     def create_options_tab(self):
         options_layout = QVBoxLayout()
-        options_checkboxes_layout, self.code_std_checkboxes = self.create_checkboxes_widget(CODING_STANDARDS)
+        options_checkboxes_layout, self.code_standards = self.create_checkboxes_widget(CODING_STANDARDS)
         standard_group = self.create_group_box("Coding Standard", options_checkboxes_layout)
         add_options_layout, self.add_options_list = self.create_list_widget(dialog_title="Add Additional Options", label_text="Enter additional option:")
         add_options_group = self.create_group_box("Additional Options", add_options_layout)
@@ -205,16 +224,16 @@ class MainWindow(QMainWindow):
         cmd_line_tab.setLayout(cmd_line_layout)
 
         ide_build_group = QGroupBox("IDE Build")
-        include_flag = self.create_layout_row("Include Flag:", self.create_line_widgets("Enter include flag (e.g., -I)"))
-        define_flag = self.create_layout_row("Define Flag:", self.create_line_widgets("Enter define flag (e.g., -D)"))
+        include_flag_layout = self.create_layout_row("Include Flag:", self.include_flag)
+        define_flag_layout = self.create_layout_row("Define Flag:", self.define_flag)
         parse_button = self.create_generic_button_widget("Parse Command Line", function=self.on_click_parse_command_line, fixedWidth=True)
         parse_button_layout = QHBoxLayout()
         parse_button_layout.addStretch()  # Add stretch to push the button to the right
         parse_button_layout.addWidget(parse_button)
         parse_button_layout.addStretch() 
         parse_command_line_layout = QHBoxLayout()
-        parse_command_line_layout.addLayout(include_flag)
-        parse_command_line_layout.addLayout(define_flag)
+        parse_command_line_layout.addLayout(include_flag_layout)
+        parse_command_line_layout.addLayout(define_flag_layout)
 
         ide_build_layout = QVBoxLayout()
         ide_build_layout.addLayout(parse_command_line_layout)
@@ -483,29 +502,34 @@ class MainWindow(QMainWindow):
             valid = False
         if not self.selected_compiler:
             valid = False
-        if self.prog_language == "Select Language":
+        if self.output_format.currentText() == "Select Format":
+            valid = False
+        if self.prog_language.currentText() == "Select Language":
             valid = False
         self.generate_button.setEnabled(valid)
 
     def build_configuration(self):
         return Configuration(
+            operating_system=self.os_button_group.checkedButton().text(),
             pclp_path=self.pclp_path.text(),
             pclp_config_path=self.pclp_config_path.text(),
             prog_language=self.prog_language.currentText(),
             compiler_binary=self.compiler_binary.text(),
             lint_output_location=self.lint_output_location.text(),
             lint_output_name=self.lint_output_name.text(),
-            additional_options=self.additional_options.text(),
+            additional_compiler_options=self.additional_compiler_options.text(),
             options_file_name=self.options_file_name.text(),
             selected_compiler=self.selected_compiler,
-            code_standards=self.code_standards.text().split(","),
-            imposter_log=self.imposter_log.text(),
-            json_compilation_database=self.json_compilation_database.text(),
-            include_flags=self.include_flags.text(),
-            define_flags=self.define_flags.text(),
+            code_standards=[CODING_STANDARDS[checkbox.text()] for checkbox in self.code_standards if checkbox.isChecked()],
+            additional_lint_options=[self.add_options_list.item(i).text() for i in range(self.add_options_list.count())],
+            imposter_log=self.imposter_log_path.text(),
+            json_compilation_database=self.json_compilation_database_path.text(),
+            include_flag=self.include_flag.text(),
+            define_flag=self.define_flag.text(),
             project_lnt_name=self.project_lnt_name.text(),
-            c_file_extensions=self.c_file_extensions.text().split(","),
-            cpp_file_extensions=self.cpp_file_extensions.text().split(","),
+            c_file_extensions=[self.c_ext_list.item(i).text() for i in range(self.c_ext_list.count())],
+            cpp_file_extensions=[self.cpp_ext_list.item(i).text() for i in range(self.cpp_ext_list.count())],
+            output_format=self.output_format.currentText(),
             output_file_path_folder=self.output_file_path_folder.text(),
             output_file_name=self.output_file_name.text()
         )
