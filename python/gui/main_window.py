@@ -473,6 +473,7 @@ class MainWindow(QMainWindow):
     def select_compiler(self, compiler):
         self.selected_compiler = compiler
         self.compiler_button.setText(compiler)
+        self.lint_output_name.setText(f"co-{compiler}")
         self.validate_inputs()
 
     # This function validates the folder path entered in the dialog. If the path doesn't exist, the border turns red and a tooltip is displayed. If the path is valid, the border returns to normal and the tooltip is cleared.
