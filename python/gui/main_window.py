@@ -224,9 +224,11 @@ class MainWindow(QMainWindow):
         cmd_line_tab.setLayout(cmd_line_layout)
 
         ide_build_group = QGroupBox("IDE Build")
+        self.include_flag.setText("-I")
+        self.define_flag.setText("-D")
         include_flag_layout = self.create_layout_row("Include Flag:", self.include_flag)
         define_flag_layout = self.create_layout_row("Define Flag:", self.define_flag)
-        parse_button = self.create_generic_button_widget("Parse Command Line", function=self.on_click_parse_command_line, fixedWidth=True)
+        parse_button = self.create_generic_button_widget("Parse Command Line", function=self.open_cmd_line_parse, fixedWidth=True)
         parse_button_layout = QHBoxLayout()
         parse_button_layout.addStretch()  # Add stretch to push the button to the right
         parse_button_layout.addWidget(parse_button)
@@ -424,6 +426,32 @@ class MainWindow(QMainWindow):
             options_list.takeItem(
                 options_list.row(current_item)
             )
+
+    def open_cmd_line_parse(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Parse Command Line")
+        dialog.setMinimumWidth(500)
+
+        layout = QVBoxLayout(dialog)
+
+        layout.addWidget(QLabel("Enter command line arguments:"))
+
+        cmd_line_edit = QLineEdit()
+        layout.addWidget(cmd_line_edit)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        layout.addWidget(buttons)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.cmd_line_args = cmd_line_edit.text().strip()
+            print(f"Command line arguments: {self.cmd_line_args}")
     
     def go_to_next_tab(self):
         current_index = self.tabs.currentIndex()
