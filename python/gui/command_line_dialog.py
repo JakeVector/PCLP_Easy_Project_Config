@@ -7,11 +7,12 @@ from PySide6.QtWidgets import (
     QPushButton,
     QListWidget,
 )
+from config.command_line_parser import CommandLineParser
 
 class CommandLineDialog(QDialog):
     def __init__(self, include_flag, define_flag, parent=None):
         super().__init__(parent)
-
+        self.parsed_results = None
         self.include_flag = include_flag
         self.define_flag = define_flag
 
@@ -76,4 +77,12 @@ class CommandLineDialog(QDialog):
 
     def parse_command_line(self):
         # Empty for now
-        return
+        parser = CommandLineParser(self.include_flag, self.define_flag)
+        result = parser.parse(self.command_line.text())
+        self.includes_list.clear()
+        self.defines_list.clear()
+        self.includes_list.addItems(result.includes)
+        self.defines_list.addItems(result.defines)
+
+        self.parsed_results = result
+        self.apply_button.setEnabled(True)

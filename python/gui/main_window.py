@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
     def create_widgets(self):
         # LineEdit widgets
         self.pclp_path = self.create_line_widgets("Enter path to PC-lint Plus", browse_type="folder")
-        self.pclp_config_path = self.create_line_widgets("Enter path to PC-lint Plus config file", browse_type="file")
+        self.pclp_config_path = self.create_line_widgets("Enter path to PC-lint Plus config.py file", browse_type="file")
         self.compiler_binary = self.create_line_widgets("Enter path to compiler executable", browse_type="file")
         self.lint_output_location = self.create_line_widgets("Enter path for .lnt and .h files", browse_type="folder")
         self.lint_output_name = self.create_line_widgets("Enter file name for .lnt and .h files")
@@ -67,12 +67,17 @@ class MainWindow(QMainWindow):
         self.project_lnt_name = self.create_line_widgets("Enter project .lnt name")
         self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="folder")
         self.output_file_name = self.create_line_widgets("Enter output file name")
+        self.parsed_command_line = None
+        self.include_list = []
+        self.define_list = []
 
         self.pclp_path.textChanged.connect(self.validate_inputs)
         self.pclp_config_path.textChanged.connect(self.validate_inputs)
         self.compiler_binary.textChanged.connect(self.validate_inputs)
         self.lint_output_location.textChanged.connect(self.validate_inputs)
         self.output_file_path_folder.textChanged.connect(self.validate_inputs)
+        self.imposter_log_path.textChanged.connect(self.validate_inputs)
+        self.json_compilation_database_path.textChanged.connect(self.validate_inputs)
 
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
@@ -192,8 +197,8 @@ class MainWindow(QMainWindow):
         compiler_info_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_compiler_options))
         compiler_info_group = self.create_group_box("Compiler", compiler_info_layout)
 
-        lnt_files_layout.addLayout(self.create_layout_row("Lint Output Location:", self.lint_output_location, browse=True, is_folder=True))
-        lnt_files_layout.addLayout(self.create_layout_row("Lint Output Name:", self.lint_output_name))
+        lnt_files_layout.addLayout(self.create_layout_row("Compiler Config Path:", self.lint_output_location, browse=True, is_folder=True))
+        lnt_files_layout.addLayout(self.create_layout_row("Compiler Config Name:", self.lint_output_name))
         lnt_files_group = self.create_group_box("Lint Output Files", lnt_files_layout)
 
         compiler_layout.addWidget(compiler_info_group)
@@ -265,6 +270,7 @@ class MainWindow(QMainWindow):
     def create_analysis_tab(self):
         analysis_layout = QVBoxLayout()
         output_layout = QVBoxLayout()
+        self.output_file_name.setText("lint_output")
 
         output_layout.addLayout(self.create_layout_row("Output Format:", self.output_format))
         output_layout.addLayout(self.create_layout_row("Output File Path:", self.output_file_path_folder, browse=True, is_folder=True))
@@ -430,7 +436,11 @@ class MainWindow(QMainWindow):
 
     def open_cmd_line_dialog(self):
         dialog = CommandLineDialog(include_flag=self.include_flag.text(), define_flag=self.define_flag.text(), parent=self)
-        dialog.exec()
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.parsed_command_line = dialog.parsed_results
+            self.include_list = dialog.parsed_results.includes
+            self.define_list = dialog.parsed_results.defines
+            self.validate_inputs()
     
     def go_to_next_tab(self):
         current_index = self.tabs.currentIndex()
@@ -507,6 +517,8 @@ class MainWindow(QMainWindow):
         if not os.path.isdir(self.lint_output_location.text()):
             valid = False
         if not os.path.isdir(self.output_file_path_folder.text()):
+            valid = False
+        if (not os.path.isfile(self.json_compilation_database_path.text()) and not os.path.isfile(self.imposter_log_path.text())) and self.parsed_command_line == None:
             valid = False
         if not self.selected_compiler:
             valid = False
