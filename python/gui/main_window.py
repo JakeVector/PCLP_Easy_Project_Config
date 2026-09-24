@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 from config.configuration import Configuration
 from gui.command_line_dialog import CommandLineDialog
+from gui.constants import CompilerInputSource
 from gui.constants import (
     COMPILER_GROUPS,
     CODING_STANDARDS,
@@ -67,9 +68,12 @@ class MainWindow(QMainWindow):
         self.project_lnt_name = self.create_line_widgets("Enter project .lnt name")
         self.output_file_path_folder = self.create_line_widgets("Enter path for output file", browse_type="folder")
         self.output_file_name = self.create_line_widgets("Enter output file name")
+
+        # Project lint command line parsed output and compiler input state
         self.parsed_command_line = None
         self.include_list = []
         self.define_list = []
+        self.compiler_input_src = None
 
         self.pclp_path.textChanged.connect(self.validate_inputs)
         self.pclp_config_path.textChanged.connect(self.validate_inputs)
@@ -77,7 +81,11 @@ class MainWindow(QMainWindow):
         self.lint_output_location.textChanged.connect(self.validate_inputs)
         self.output_file_path_folder.textChanged.connect(self.validate_inputs)
         self.imposter_log_path.textChanged.connect(self.validate_inputs)
+        self.imposter_log_path.textChanged.connect(self.on_command_line_build_selected)
+        self.imposter_log_path.textChanged.connect(self.update_compiler_input_state)
         self.json_compilation_database_path.textChanged.connect(self.validate_inputs)
+        self.json_compilation_database_path.textChanged.connect(self.on_command_line_build_selected)
+        self.json_compilation_database_path.textChanged.connect(self.update_compiler_input_state)
 
         # Combobox widgets
         self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
@@ -234,10 +242,13 @@ class MainWindow(QMainWindow):
         self.define_flag.setText("-D")
         include_flag_layout = self.create_layout_row("Include Flag:", self.include_flag)
         define_flag_layout = self.create_layout_row("Define Flag:", self.define_flag)
-        parse_button = self.create_generic_button_widget("Parse Command Line", function=self.open_cmd_line_dialog, fixedWidth=True)
+        self.parse_button = self.create_generic_button_widget("Parse Command Line", function=self.open_cmd_line_dialog, fixedWidth=True)
+        self.clear_parse_button = self.create_generic_button_widget("Clear Parsed Input", function=self.clear_parsed_command, fixedWidth=True)
+        self.clear_parse_button.setEnabled(False)
         parse_button_layout = QHBoxLayout()
         parse_button_layout.addStretch()  # Add stretch to push the button to the right
-        parse_button_layout.addWidget(parse_button)
+        parse_button_layout.addWidget(self.parse_button)
+        parse_button_layout.addWidget(self.clear_parse_button)
         parse_button_layout.addStretch() 
         parse_command_line_layout = QHBoxLayout()
         parse_command_line_layout.addLayout(include_flag_layout)
@@ -334,7 +345,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(label)
         layout.addWidget(widget)
         if browse:
-            layout.addWidget(self.create_browse_button_widget(widget, is_folder))
+            browse_button = self.create_browse_button_widget(widget, is_folder)
+            widget.browse_button = browse_button
+            layout.addWidget(browse_button)
         return layout
 
     # Create buttons to go to next or previous tab
@@ -441,6 +454,10 @@ class MainWindow(QMainWindow):
             self.include_list = dialog.parsed_results.includes
             self.define_list = dialog.parsed_results.defines
             self.validate_inputs()
+
+            self.compiler_input_src = CompilerInputSource.COMMAND_LINE
+            self.update_compiler_input_state()
+            self.clear_parse_button.setEnabled(True)
     
     def go_to_next_tab(self):
         current_index = self.tabs.currentIndex()
@@ -485,6 +502,35 @@ class MainWindow(QMainWindow):
         self.compiler_button.setText(compiler)
         self.lint_output_name.setText(f"co-{compiler}")
         self.validate_inputs()
+
+    def clear_parsed_command(self):
+        self.compiler_input_src = None
+        self.parsed_command_line = ""
+        self.include_list.clear()
+        self.define_list.clear()
+        self.update_compiler_input_state()
+        self.clear_parse_button.setEnabled(False)
+
+    def on_command_line_build_selected(self):
+        if self.imposter_log_path.text():
+            self.compiler_input_src = CompilerInputSource.IMPOSTER
+        elif self.json_compilation_database_path.text():
+            self.compiler_input_src = CompilerInputSource.JSON_COMPILATION_DATABASE
+        else:
+            self.compiler_input_src = None
+        self.update_compiler_input_state()
+
+    def update_compiler_input_state(self):
+        using_command_line = self.compiler_input_src == CompilerInputSource.COMMAND_LINE
+        using_imposter = self.compiler_input_src == CompilerInputSource.IMPOSTER
+        using_json_database = self.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE
+
+        self.parse_button.setEnabled(not using_imposter and not using_json_database)
+        self.imposter_log_path.setEnabled(not using_command_line and not using_json_database)
+        self.imposter_log_path.browse_button.setEnabled(not using_command_line and not using_json_database)
+        self.json_compilation_database_path.setEnabled(not using_command_line and not using_imposter)
+        self.json_compilation_database_path.browse_button.setEnabled(not using_command_line and not using_imposter)
+
 
     # This function validates the folder path entered in the dialog. If the path doesn't exist, the border turns red and a tooltip is displayed. If the path is valid, the border returns to normal and the tooltip is cleared.
     def validate_folder_path(self, line_edit_widget):

@@ -1,3 +1,10 @@
+from enum import Enum
+
+class CompilerInputSource(Enum):
+    COMMAND_LINE = "command_line"
+    IMPOSTER = "imposter"
+    JSON_COMPILATION_DATABASE = "json"
+
 IAR_COMPILERS = [
     "iar-430",
     "iar-78k",
