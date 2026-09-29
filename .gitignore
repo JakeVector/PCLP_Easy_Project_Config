@@ -2,4 +2,5 @@
 python/__pycache__/
 python/config/__pycache__/
 python/gui/__pycache__/
+Test_Output/
 *.txt

@@ -26,6 +26,7 @@ from PySide6.QtCore import QSize
 import sys
 from pathlib import Path
 from config.configuration import Configuration
+from config.pclp_configurator import PclpConfigurator
 from gui.command_line_dialog import CommandLineDialog
 from gui.constants import CompilerInputSource
 from gui.constants import (
@@ -202,7 +203,7 @@ class MainWindow(QMainWindow):
 
         compiler_info_layout.addLayout(self.create_layout_row("Compiler:", self.compiler_button))  # Add the button to the layout without a label
         compiler_info_layout.addLayout(self.create_layout_row("Compiler Binary:", self.compiler_binary, browse=True, is_folder=False))
-        compiler_info_layout.addLayout(self.create_layout_row("Additional Options:", self.additional_compiler_options))
+        compiler_info_layout.addLayout(self.create_layout_row("Compiler Options:", self.additional_compiler_options))
         compiler_info_group = self.create_group_box("Compiler", compiler_info_layout)
 
         lnt_files_layout.addLayout(self.create_layout_row("Compiler Config Path:", self.lint_output_location, browse=True, is_folder=True))
@@ -470,15 +471,6 @@ class MainWindow(QMainWindow):
         if current_index > 0:
             self.tabs.setCurrentIndex(current_index - 1)
 
-    # This function is called when the "Generate Config" button is clicked. It currently prints a message to the console.
-    def on_button_clicked_generate_config(self):
-        config = self.build_configuration()
-        print(config)
-
-    def on_click_parse_command_line(self):
-        # Empty for now
-        return
-
     # This function opens a folder selection dialog and sets the selected folder path to the provided QLineEdit widget.
     def browse_for_folder(self, line_edit_widget):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Directory")
@@ -580,16 +572,18 @@ class MainWindow(QMainWindow):
             pclp_path=self.pclp_path.text(),
             pclp_config_path=self.pclp_config_path.text(),
             prog_language=self.prog_language.currentText(),
+            selected_compiler=self.selected_compiler,
             compiler_binary=self.compiler_binary.text(),
             lint_output_location=self.lint_output_location.text(),
             lint_output_name=self.lint_output_name.text(),
             additional_compiler_options=self.additional_compiler_options.text(),
             options_file_name=self.options_file_name.text(),
-            selected_compiler=self.selected_compiler,
             code_standards=[CODING_STANDARDS[checkbox.text()] for checkbox in self.code_standards if checkbox.isChecked()],
             additional_lint_options=[self.add_options_list.item(i).text() for i in range(self.add_options_list.count())],
             imposter_log=self.imposter_log_path.text(),
             json_compilation_database=self.json_compilation_database_path.text(),
+            parsed_command_line=self.parsed_command_line,
+            compiler_input_src=self.compiler_input_src,
             include_flag=self.include_flag.text(),
             define_flag=self.define_flag.text(),
             project_lnt_name=self.project_lnt_name.text(),
@@ -599,6 +593,15 @@ class MainWindow(QMainWindow):
             output_file_path_folder=self.output_file_path_folder.text(),
             output_file_name=self.output_file_name.text()
         )
+
+    def on_click_parse_command_line(self):
+        # Empty for now
+        return
+    
+    def on_button_clicked_generate_config(self):
+        config = self.build_configuration()
+        pclp_configurator = PclpConfigurator(config)
+        pclp_configurator.generate()
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
