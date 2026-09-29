@@ -29,6 +29,7 @@ from config.configuration import Configuration
 from config.pclp_configurator import PclpConfigurator
 from gui.command_line_dialog import CommandLineDialog
 from gui.constants import CompilerInputSource
+from gui.constants import ProgrammingLanguage
 from gui.constants import (
     COMPILER_GROUPS,
     CODING_STANDARDS,
@@ -88,8 +89,7 @@ class MainWindow(QMainWindow):
         self.json_compilation_database_path.textChanged.connect(self.on_command_line_build_selected)
         self.json_compilation_database_path.textChanged.connect(self.update_compiler_input_state)
 
-        # Combobox widgets
-        self.prog_language = self.create_combobox_widget(["Select Language","C", "C++", "Mixed C/C++"])
+        self.prog_language = self.create_combobox_widget(["Select Language", ProgrammingLanguage.C.value, ProgrammingLanguage.CPP.value, ProgrammingLanguage.MIXED.value])
         self.output_format = self.create_combobox_widget(["Select Output Format", "Text", "HTML", "XML", "SARIF"])
 
         self.prog_language.currentIndexChanged.connect(self.validate_inputs)
@@ -245,6 +245,7 @@ class MainWindow(QMainWindow):
         define_flag_layout = self.create_layout_row("Define Flag:", self.define_flag)
         self.parse_button = self.create_generic_button_widget("Parse Command Line", function=self.open_cmd_line_dialog, fixedWidth=True)
         self.clear_parse_button = self.create_generic_button_widget("Clear Parsed Input", function=self.clear_parsed_command, fixedWidth=True)
+        self.parse_button.setEnabled(False)
         self.clear_parse_button.setEnabled(False)
         parse_button_layout = QHBoxLayout()
         parse_button_layout.addStretch()  # Add stretch to push the button to the right
@@ -449,11 +450,19 @@ class MainWindow(QMainWindow):
             )
 
     def open_cmd_line_dialog(self):
-        dialog = CommandLineDialog(include_flag=self.include_flag.text(), define_flag=self.define_flag.text(), parent=self)
+        if self.prog_language.currentText() == ProgrammingLanguage.MIXED.value:
+            self.extensions_list = [self.c_ext_list.item(i).text() for i in range(self.c_ext_list.count())] + [self.cpp_ext_list.item(i).text() for i in range(self.cpp_ext_list.count())]
+        elif self.prog_language.currentText() == ProgrammingLanguage.C.value:
+            self.extensions_list = [self.c_ext_list.item(i).text() for i in range(self.c_ext_list.count())]
+        elif self.prog_language.currentText() == ProgrammingLanguage.CPP.value:
+            self.extensions_list = [self.cpp_ext_list.item(i).text() for i in range(self.cpp_ext_list.count())]
+
+        dialog = CommandLineDialog(include_flag=self.include_flag.text(), define_flag=self.define_flag.text(), file_extensions=self.extensions_list, parent=self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.parsed_command_line = dialog.parsed_results
             self.include_list = dialog.parsed_results.includes
             self.define_list = dialog.parsed_results.defines
+            self.source_file_list = dialog.parsed_results.source_files
             self.validate_inputs()
 
             self.compiler_input_src = CompilerInputSource.COMMAND_LINE
@@ -517,7 +526,7 @@ class MainWindow(QMainWindow):
         using_imposter = self.compiler_input_src == CompilerInputSource.IMPOSTER
         using_json_database = self.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE
 
-        self.parse_button.setEnabled(not using_imposter and not using_json_database)
+        self.parse_button.setEnabled(not using_imposter and not using_json_database and self.prog_language.currentText() != ProgrammingLanguage.SELECT_LANGUAGE.value)
         self.imposter_log_path.setEnabled(not using_command_line and not using_json_database)
         self.imposter_log_path.browse_button.setEnabled(not using_command_line and not using_json_database)
         self.json_compilation_database_path.setEnabled(not using_command_line and not using_imposter)
@@ -564,6 +573,8 @@ class MainWindow(QMainWindow):
             valid = False
         if self.prog_language.currentText() == "Select Language":
             valid = False
+        else:
+            self.parse_button.setEnabled(True)
         self.generate_button.setEnabled(valid)
 
     def build_configuration(self):

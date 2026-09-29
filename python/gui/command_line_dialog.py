@@ -10,11 +10,12 @@ from PySide6.QtWidgets import (
 from config.command_line_parser import CommandLineParser
 
 class CommandLineDialog(QDialog):
-    def __init__(self, include_flag, define_flag, parent=None):
+    def __init__(self, include_flag, define_flag, file_extensions, parent=None):
         super().__init__(parent)
         self.parsed_results = None
         self.include_flag = include_flag
         self.define_flag = define_flag
+        self.file_extensions = file_extensions
 
         self.setWindowTitle("Parse Command Line")
         self.setMinimumWidth(600)
@@ -77,7 +78,7 @@ class CommandLineDialog(QDialog):
 
     def parse_command_line(self):
         # Empty for now
-        parser = CommandLineParser(self.include_flag, self.define_flag)
+        parser = CommandLineParser(self.include_flag, self.define_flag, self.file_extensions)
         result = parser.parse(self.command_line.text())
         self.includes_list.clear()
         self.defines_list.clear()

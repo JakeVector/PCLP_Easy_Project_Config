@@ -5,6 +5,12 @@ class CompilerInputSource(Enum):
     IMPOSTER = "imposter"
     JSON_COMPILATION_DATABASE = "json"
 
+class ProgrammingLanguage(Enum):
+    SELECT_LANGUAGE = "Select Language"
+    C = "C"
+    CPP = "C++"
+    MIXED = "Mixed C/C++"
+
 IAR_COMPILERS = [
     "iar-430",
     "iar-78k",
