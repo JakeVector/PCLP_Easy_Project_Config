@@ -2,6 +2,7 @@ import subprocess
 import sys
 from shutil import which
 from config.configuration import Configuration
+from gui.constants import CompilerInputSource
 from pathlib import Path
 
 class PclpConfigurator:
@@ -37,6 +38,22 @@ class PclpConfigurator:
                 options_text.append(f"{opt}\n")
 
             options_file.write_text("".join(options_text) + "\n")
+
+    def build_project_config(self):
+        if self.config.compiler_input_src == CompilerInputSource.IMPOSTER:
+            subprocess.run([self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
+                            f"--compiler-bin={self.config.compiler_binary}",
+                            f"--imposter-file={self.config.imposter_log}",
+                            f"--config-output-lnt-file={self.config.project_lnt_name}",
+                            "--generate-project-config"])
+        elif self.config.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE:
+            subprocess.run([self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
+                            f"--compiler-bin={self.config.compiler_binary}",
+                            f"--compilation-db={self.config.json_compilation_database}",
+                            f"--config-output-lnt-file={self.config.project_lnt_name}",
+                            "--generate-project-config"])
+        elif self.config.compiler_input_src == CompilerInputSource.COMMAND_LINE:
+            pass
 
     def generate(self):
         self.build_compiler_config()
