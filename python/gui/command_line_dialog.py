@@ -32,6 +32,7 @@ class CommandLineDialog(QDialog):
 
         self.includes_list = QListWidget()
         self.defines_list = QListWidget()
+        self.source_files_list = QListWidget()
 
         self.parse_button.clicked.connect(self.parse_command_line)
         self.apply_button.clicked.connect(self.accept)
@@ -44,6 +45,7 @@ class CommandLineDialog(QDialog):
         results_layout = QHBoxLayout()
         include_layout = QVBoxLayout()
         define_layout = QVBoxLayout()
+        source_layout = QVBoxLayout()
 
         # Command line input
         main_layout.addWidget(QLabel("Command Line:"))
@@ -64,6 +66,9 @@ class CommandLineDialog(QDialog):
         define_layout.addWidget(QLabel("Defines:"))
         define_layout.addWidget(self.defines_list)
 
+        source_layout.addWidget(QLabel("Source Files:"))
+        source_layout.addWidget(self.source_files_list)
+
         # Apply / Cancel buttons
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -72,6 +77,7 @@ class CommandLineDialog(QDialog):
 
         results_layout.addLayout(include_layout)
         results_layout.addLayout(define_layout)
+        results_layout.addLayout(source_layout)
 
         main_layout.addLayout(results_layout)
         main_layout.addLayout(button_layout)
@@ -82,8 +88,10 @@ class CommandLineDialog(QDialog):
         result = parser.parse(self.command_line.text())
         self.includes_list.clear()
         self.defines_list.clear()
+        self.source_files_list.clear()
         self.includes_list.addItems(result.includes)
         self.defines_list.addItems(result.defines)
+        self.source_files_list.addItems(result.source_files)
 
         self.parsed_results = result
         self.apply_button.setEnabled(True)

@@ -18,11 +18,10 @@ class Configuration:
     json_compilation_database: str
     parsed_command_line: str
     compiler_input_src: str
-    include_flag: str
-    define_flag: str
+    include_list: list[str]
+    define_list: list[str]
+    source_files: list[str]
     project_lnt_name: str
-    c_file_extensions: list[str]
-    cpp_file_extensions: list[str]
     output_format: str
     output_file_path_folder: str
     output_file_name: str
