@@ -53,8 +53,18 @@ class PclpConfigurator:
                             f"--config-output-lnt-file={self.config.project_lnt_name}",
                             "--generate-project-config"])
         elif self.config.compiler_input_src == CompilerInputSource.COMMAND_LINE:
-            pass
+            project_file = Path(self.config.lint_output_location) / f"{self.config.project_lnt_name}"
+            project_text = []
+            for include in self.config.include_list:
+                project_text.append(f'-i"{include}"\n')
+            for define in self.config.define_list:
+                project_text.append(f'-d{define}\n')
+            for source in self.config.source_files:
+                project_text.append(f"{source}\n")
+
+            project_file.write_text("".join(project_text) + "\n")
 
     def generate(self):
         self.build_compiler_config()
         self.build_options_file()
+        self.build_project_config()
