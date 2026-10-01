@@ -11,6 +11,23 @@ class ProgrammingLanguage(Enum):
     CPP = "C++"
     MIXED = "Mixed C/C++"
 
+class OperatingSystem(Enum):
+    WINDOWS = "Windows"
+    LINUX = "Linux"
+    MACOS = "macOS"
+
+class OutputFormat(Enum):
+    TEXT = "text"
+    HTML = "html"
+    XML = "xml"
+    SARIF = "SARIF"
+
+class OutputExtensions(Enum):
+    TEXT = ".txt"
+    HTML = ".html"
+    XML = ".xml"
+    SARIF = ".sarif"
+
 IAR_COMPILERS = [
     "iar-430",
     "iar-78k",

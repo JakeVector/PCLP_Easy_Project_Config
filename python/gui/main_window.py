@@ -30,6 +30,8 @@ from config.pclp_configurator import PclpConfigurator
 from gui.command_line_dialog import CommandLineDialog
 from gui.constants import CompilerInputSource
 from gui.constants import ProgrammingLanguage
+from gui.constants import OperatingSystem
+from gui.constants import OutputFormat
 from gui.constants import (
     COMPILER_GROUPS,
     CODING_STANDARDS,
@@ -75,6 +77,7 @@ class MainWindow(QMainWindow):
         self.parsed_command_line = None
         self.include_list = []
         self.define_list = []
+        self.source_file_list = []
         self.compiler_input_src = None
 
         self.pclp_path.textChanged.connect(self.validate_inputs)
@@ -90,7 +93,7 @@ class MainWindow(QMainWindow):
         self.json_compilation_database_path.textChanged.connect(self.update_compiler_input_state)
 
         self.prog_language = self.create_combobox_widget(["Select Language", ProgrammingLanguage.C.value, ProgrammingLanguage.CPP.value, ProgrammingLanguage.MIXED.value])
-        self.output_format = self.create_combobox_widget(["Select Output Format", "Text", "HTML", "XML", "SARIF"])
+        self.output_format = self.create_combobox_widget(["Select Output Format", OutputFormat.TEXT.value, OutputFormat.HTML.value, OutputFormat.XML.value, OutputFormat.SARIF.value])
 
         self.prog_language.currentIndexChanged.connect(self.validate_inputs)
         self.output_format.currentIndexChanged.connect(self.validate_inputs)
@@ -99,10 +102,10 @@ class MainWindow(QMainWindow):
         self.generate_button = self.create_generic_button_widget("Generate Configuration", function=self.on_button_clicked_generate_config, fixedWidth=True)
         self.generate_button.setEnabled(False)
 
-        self.os_windows = QRadioButton("Windows")
+        self.os_windows = QRadioButton(OperatingSystem.WINDOWS.value)
         self.os_windows.setChecked(True)  # Set Windows as the default selected OS
-        self.os_linux = QRadioButton("Linux")
-        self.os_mac = QRadioButton("Mac")
+        self.os_linux = QRadioButton(OperatingSystem.LINUX.value)
+        self.os_mac = QRadioButton(OperatingSystem.MACOS.value)
         self.os_button_group = QButtonGroup()
         self.os_button_group.addButton(self.os_windows)
         self.os_button_group.addButton(self.os_linux)
@@ -595,9 +598,9 @@ class MainWindow(QMainWindow):
             json_compilation_database=self.json_compilation_database_path.text(),
             parsed_command_line=self.parsed_command_line,
             compiler_input_src=self.compiler_input_src,
-            include_list=[self.include_list.item(i).text() for i in range(self.include_list.count())],
-            define_list=[self.define_list.item(i).text() for i in range(self.define_list.count())],
-            source_files=[self.source_file_list.item(i).text() for i in range(self.source_file_list.count())],
+            include_list=self.include_list,
+            define_list=self.define_list,
+            source_file_list=self.source_file_list,
             project_lnt_name=self.project_lnt_name.text(),
             output_format=self.output_format.currentText(),
             output_file_path_folder=self.output_file_path_folder.text(),
