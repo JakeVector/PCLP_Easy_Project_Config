@@ -2,7 +2,7 @@ import subprocess
 import sys
 from shutil import which
 from config.configuration import Configuration
-from gui.constants import CompilerInputSource
+from gui.constants import CompilerInputSource, OutputFormat
 from gui.constants import OperatingSystem
 from pathlib import Path
 
@@ -34,19 +34,18 @@ class PclpConfigurator:
                         "--generate-compiler-config"])
 
     def build_options_file(self):
+        options_text = []
+        options_text.append(f'-i"{self.config.pclp_path}/lnt"\n')
         if self.config.code_standards or self.config.additional_lint_options:
             self.options_file_location = Path(self.config.lint_output_location) / f"{self.config.options_file_name}"
-            options_text = []
 
             for i, std in enumerate(self.config.code_standards):
-                if i == 0:
-                    options_text.append(f'-i"{self.config.pclp_path}/lnt"\n')
                 options_text.append(f"{std}\n")
 
             for opt in self.config.additional_lint_options:
                 options_text.append(f"{opt}\n")
 
-            self.options_file_location.write_text("".join(options_text) + "\n")
+        self.options_file_location.write_text("".join(options_text) + "\n")
 
     def build_project_config(self):
         self.project_lnt_location = Path(self.config.lint_output_location) / f"{self.config.project_lnt_name}"
@@ -77,8 +76,27 @@ class PclpConfigurator:
     def run_analysis(self):
         if not Path(self.pclp_exe).exists():
             raise FileNotFoundError(f"PC-lint Plus executable not found at {self.pclp_exe}")
-        else:
-            subprocess.run([str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location), str(self.project_lnt_location)])
+        elif self.config.output_format == OutputFormat.TEXT.value:
+            subprocess.run([str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
+                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
+                            str(self.project_lnt_location)])
+        elif self.config.output_format == OutputFormat.HTML.value or self.config.output_format == OutputFormat.XML.value:
+            subprocess.run([str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
+                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}] env-{self.config.output_format}.lnt",
+                            str(self.project_lnt_location)])
+        elif self.config.output_format == OutputFormat.SARIF.value:
+            xml_results_path = f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.xml"
+            dump_output_path = f"{self.config.output_file_path_folder}\\dump_output.xml"
+            version_path = f"{self.config.output_file_path_folder}\\version.txt"
+            subprocess.run([str(self.pclp_exe), 
+                            f"-os[{xml_results_path}] env-xml.lnt",
+                            f"-dump_messages(file={dump_output_path}, format=xml) -oe({version_path}) -version",
+                            str(self.compiler_lnt_location), str(self.options_file_location),
+                            str(self.project_lnt_location)])
+            subprocess.run([str(self.python_exe), f"generate_reports.py", f"--input-xml {xml_results_path}",
+                            f"--input-xml-descriptions {dump_output_path}", f"--input-version {version_path}",
+                            f"--output-sarif {self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}",
+                            f"--deduplicate 1"])
             
     def generate(self):
         self.build_compiler_config()

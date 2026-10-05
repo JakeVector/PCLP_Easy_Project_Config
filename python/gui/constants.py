@@ -17,16 +17,10 @@ class OperatingSystem(Enum):
     MACOS = "macOS"
 
 class OutputFormat(Enum):
-    TEXT = "text"
+    TEXT = "txt"
     HTML = "html"
     XML = "xml"
-    SARIF = "SARIF"
-
-class OutputExtensions(Enum):
-    TEXT = ".txt"
-    HTML = ".html"
-    XML = ".xml"
-    SARIF = ".sarif"
+    SARIF = "sarif"
 
 IAR_COMPILERS = [
     "iar-430",

@@ -28,10 +28,7 @@ from pathlib import Path
 from config.configuration import Configuration
 from config.pclp_configurator import PclpConfigurator
 from gui.command_line_dialog import CommandLineDialog
-from gui.constants import CompilerInputSource
-from gui.constants import ProgrammingLanguage
-from gui.constants import OperatingSystem
-from gui.constants import OutputFormat
+from gui.constants import CompilerInputSource, ProgrammingLanguage, OperatingSystem, OutputFormat
 from gui.constants import (
     COMPILER_GROUPS,
     CODING_STANDARDS,
@@ -606,10 +603,6 @@ class MainWindow(QMainWindow):
             output_file_path_folder=self.output_file_path_folder.text(),
             output_file_name=self.output_file_name.text()
         )
-
-    def on_click_parse_command_line(self):
-        # Empty for now
-        return
     
     def on_button_clicked_generate_config(self):
         config = self.build_configuration()
