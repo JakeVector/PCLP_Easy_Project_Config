@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from shutil import which
@@ -9,6 +10,7 @@ from pathlib import Path
 class PclpConfigurator:
     def __init__(self, config: Configuration):
         self.config = config
+        self.script_text = []
 
         if self.config.operating_system == OperatingSystem.WINDOWS.value:
             self.pclp_exe = Path(self.config.pclp_path) / "pclp64.exe"
@@ -26,12 +28,14 @@ class PclpConfigurator:
 
     def build_compiler_config(self):
         self.compiler_lnt_location = Path(self.config.lint_output_location) / f"{self.config.lint_output_name}"
-        subprocess.run([self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
-                        f"--compiler-bin={self.config.compiler_binary}",
-                        f"--config-output-lnt-file={self.compiler_lnt_location}.lnt",
-                        f"--config-output-header-file={self.compiler_lnt_location}.h",
-                        f"--compiler-options={self.config.additional_compiler_options}",
-                        "--generate-compiler-config"])
+        compile_config_command = [self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
+                                  f"--compiler-bin={self.config.compiler_binary}",
+                                  f"--config-output-lnt-file={self.compiler_lnt_location}.lnt",
+                                  f"--config-output-header-file={self.compiler_lnt_location}.h",
+                                  f"--compiler-options={self.config.additional_compiler_options}",
+                                  f"--generate-compiler-config"]
+        self.script_text.append(" ".join(compile_config_command))
+        subprocess.run(compile_config_command)
 
     def build_options_file(self):
         options_text = []
@@ -50,17 +54,21 @@ class PclpConfigurator:
     def build_project_config(self):
         self.project_lnt_location = Path(self.config.lint_output_location) / f"{self.config.project_lnt_name}"
         if self.config.compiler_input_src == CompilerInputSource.IMPOSTER:
-            subprocess.run([self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
-                            f"--compiler-bin={self.config.compiler_binary}",
-                            f"--imposter-file={self.config.imposter_log}",
-                            f"--config-output-lnt-file={self.project_lnt_location}",
-                            "--generate-project-config"])
+            imposter_command = [self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
+                               f"--compiler-bin={self.config.compiler_binary}",
+                               f"--imposter-file={self.config.imposter_log}",
+                               f"--config-output-lnt-file={self.project_lnt_location}",
+                               "--generate-project-config"]
+            subprocess.run(imposter_command)
+            self.script_text.append(" ".join(imposter_command))
         elif self.config.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE:
-            subprocess.run([self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
+            json_command = [self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
                             f"--compiler-bin={self.config.compiler_binary}",
                             f"--compilation-db={self.config.json_compilation_database}",
                             f"--config-output-lnt-file={self.project_lnt_location}",
-                            "--generate-project-config"])
+                            "--generate-project-config"]
+            subprocess.run(json_command)
+            self.script_text.append(" ".join(json_command))
         elif self.config.compiler_input_src == CompilerInputSource.COMMAND_LINE:
             project_file = self.project_lnt_location
             project_text = []
@@ -74,35 +82,57 @@ class PclpConfigurator:
             project_file.write_text("".join(project_text) + "\n")
 
     def run_analysis(self):
+        analysis_command = []
+        sarif_conversion_command = []
         if not Path(self.pclp_exe).exists():
             raise FileNotFoundError(f"PC-lint Plus executable not found at {self.pclp_exe}")
         elif self.config.output_format == OutputFormat.TEXT.value:
-            subprocess.run([str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
-                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
-                            str(self.project_lnt_location)])
+            analysis_command = [str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
+                           f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
+                           str(self.project_lnt_location)]
+            subprocess.run(analysis_command)
         elif self.config.output_format == OutputFormat.HTML.value or self.config.output_format == OutputFormat.XML.value:
-            subprocess.run([str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
-                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
-                            f"env-{self.config.output_format}.lnt",
-                            str(self.project_lnt_location)])
+            analysis_command = [str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
+                                f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
+                                f"env-{self.config.output_format}.lnt",
+                                str(self.project_lnt_location)]
+            subprocess.run(analysis_command)
         elif self.config.output_format == OutputFormat.SARIF.value:
             xml_results_path = f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.xml"
             dump_output_path = f"{self.config.output_file_path_folder}\\dump_output.xml"
             version_path = f"{self.config.output_file_path_folder}\\version.txt"
-            subprocess.run([str(self.pclp_exe), 
-                            f"-dump_messages(file={dump_output_path}, format=xml)",
-                            f"-oe({version_path}) -version",
-                            str(self.compiler_lnt_location), 
-                            str(self.options_file_location),
-                            f"-os[{xml_results_path}]", f"env-xml.lnt",
-                            str(self.project_lnt_location)])
-            subprocess.run([str(self.python_exe), f"config\\generate-reports.py", f"--input-xml", f"{xml_results_path}",
-                            f"--input-xml-descriptions", f"{dump_output_path}", f"--input-version", f"{version_path}",
-                            f"--output-sarif", f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}",
-                            f"--deduplicate", f"1"])
+            analysis_command = [str(self.pclp_exe), 
+                                f"-dump_messages(file={dump_output_path}, format=xml)",
+                                f"-oe({version_path}) -version",
+                                str(self.compiler_lnt_location), 
+                                str(self.options_file_location),
+                                f"-os[{xml_results_path}]", f"env-xml.lnt",
+                                str(self.project_lnt_location)]
+            sarif_conversion_command = [str(self.python_exe), f"config\\generate-reports.py", f"--input-xml", f"{xml_results_path}",
+                                        f"--input-xml-descriptions", f"{dump_output_path}", f"--input-version", f"{version_path}",
+                                        f"--output-sarif", f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}",
+                                        f"--deduplicate", f"1"]
+            subprocess.run(analysis_command)
+            subprocess.run(sarif_conversion_command)
+        self.script_text.append(" ".join(analysis_command))
+        if self.config.output_format == OutputFormat.SARIF.value:
+            self.script_text.append(" ".join(sarif_conversion_command))
+
+    def create_script(self):
+        if self.config.operating_system == OperatingSystem.WINDOWS.value:
+            script_path = Path(self.config.output_file_path_folder) / f"{self.config.output_file_name}.bat"
+            self.script_text.insert(0, "@echo off")
+        elif self.config.operating_system in (OperatingSystem.LINUX.value, OperatingSystem.MACOS.value):
+            script_path = Path(self.config.output_file_path_folder) / f"{self.config.output_file_name}.sh"
+            self.script_text.insert(0, "#!/bin/bash")
+
+        script_path.write_text("\n\n".join(self.script_text))
+        if self.config.operating_system in (OperatingSystem.LINUX.value, OperatingSystem.MACOS.value):
+            os.chmod(script_path, 0o755)
             
     def generate(self):
         self.build_compiler_config()
         self.build_options_file()
         self.build_project_config()
         self.run_analysis()
+        self.create_script()
