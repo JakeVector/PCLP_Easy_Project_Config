@@ -82,21 +82,24 @@ class PclpConfigurator:
                             str(self.project_lnt_location)])
         elif self.config.output_format == OutputFormat.HTML.value or self.config.output_format == OutputFormat.XML.value:
             subprocess.run([str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
-                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}] env-{self.config.output_format}.lnt",
+                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
+                            f"env-{self.config.output_format}.lnt",
                             str(self.project_lnt_location)])
         elif self.config.output_format == OutputFormat.SARIF.value:
             xml_results_path = f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.xml"
             dump_output_path = f"{self.config.output_file_path_folder}\\dump_output.xml"
             version_path = f"{self.config.output_file_path_folder}\\version.txt"
             subprocess.run([str(self.pclp_exe), 
-                            f"-os[{xml_results_path}] env-xml.lnt",
-                            f"-dump_messages(file={dump_output_path}, format=xml) -oe({version_path}) -version",
-                            str(self.compiler_lnt_location), str(self.options_file_location),
+                            f"-dump_messages(file={dump_output_path}, format=xml)",
+                            f"-oe({version_path}) -version",
+                            str(self.compiler_lnt_location), 
+                            str(self.options_file_location),
+                            f"-os[{xml_results_path}]", f"env-xml.lnt",
                             str(self.project_lnt_location)])
-            subprocess.run([str(self.python_exe), f"generate_reports.py", f"--input-xml {xml_results_path}",
-                            f"--input-xml-descriptions {dump_output_path}", f"--input-version {version_path}",
-                            f"--output-sarif {self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}",
-                            f"--deduplicate 1"])
+            subprocess.run([str(self.python_exe), f"config\\generate-reports.py", f"--input-xml", f"{xml_results_path}",
+                            f"--input-xml-descriptions", f"{dump_output_path}", f"--input-version", f"{version_path}",
+                            f"--output-sarif", f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}",
+                            f"--deduplicate", f"1"])
             
     def generate(self):
         self.build_compiler_config()
