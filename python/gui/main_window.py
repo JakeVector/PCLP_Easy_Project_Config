@@ -519,6 +519,25 @@ class MainWindow(QMainWindow):
         self.lint_output_name.setText(f"co-{compiler}")
         self.validate_inputs()
 
+    def set_combobox_value(self, combobox, value):
+        index = combobox.findText(value)
+        if index != -1:
+            combobox.setCurrentIndex(index)
+        else:
+            combobox.setCurrentIndex(0)
+
+    def find_menu_action(self, menu, value):
+        for action in menu.actions():
+            if action.text() == value:
+                return action
+
+            submenu = action.menu()
+            if submenu:
+                found_action = self.find_menu_action(submenu, value)
+                if found_action:
+                    return found_action
+        return None
+
     def clear_parsed_command(self):
         self.compiler_input_src = None
         self.parsed_command_line = ""
@@ -630,9 +649,10 @@ class MainWindow(QMainWindow):
                 break
         self.pclp_path.setText(config.pclp_path)
         self.pclp_config_path.setText(config.pclp_config_path)
-        self.prog_language.setCurrentText(config.prog_language)
-        self.compiler_button.setText(config.selected_compiler)
-        self.selected_compiler = config.selected_compiler
+        self.set_combobox_value(self.prog_language, config.prog_language)
+        action = self.find_menu_action(self.compiler_button.menu(), config.selected_compiler)
+        if action:
+            action.trigger()
         self.compiler_binary.setText(config.compiler_binary)
         self.lint_output_location.setText(config.lint_output_location)
         self.lint_output_name.setText(config.lint_output_name)
@@ -657,7 +677,7 @@ class MainWindow(QMainWindow):
         self.define_list = config.define_list
         self.source_file_list = config.source_file_list
         self.project_lnt_name.setText(config.project_lnt_name)
-        self.output_format.setCurrentText(config.output_format)
+        self.set_combobox_value(self.output_format, config.output_format)
         self.output_file_path_folder.setText(config.output_file_path_folder)
         self.output_file_name.setText(config.output_file_name)
     
