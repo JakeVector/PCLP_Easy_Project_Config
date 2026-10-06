@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, asdict
 
 @dataclass
 class Configuration:
@@ -25,3 +26,12 @@ class Configuration:
     output_format: str
     output_file_path_folder: str
     output_file_name: str
+
+def save_config(config: Configuration):
+        with open(f"{config.output_file_path_folder}\\pclp_config.json", "w") as f:
+            json.dump(asdict(config), f, indent=4)
+
+def load_config(file_path: str) -> Configuration:
+    with open(file_path, "r") as f:
+        data = json.load(f)
+    return Configuration(**data)

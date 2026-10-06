@@ -465,7 +465,7 @@ class MainWindow(QMainWindow):
             self.source_file_list = dialog.parsed_results.source_files
             self.validate_inputs()
 
-            self.compiler_input_src = CompilerInputSource.COMMAND_LINE
+            self.compiler_input_src = CompilerInputSource.COMMAND_LINE.value
             self.update_compiler_input_state()
             self.clear_parse_button.setEnabled(True)
     
@@ -509,22 +509,24 @@ class MainWindow(QMainWindow):
         self.parsed_command_line = ""
         self.include_list.clear()
         self.define_list.clear()
+        self.source_file_list.clear()
+        self.define_list.clear()
         self.update_compiler_input_state()
         self.clear_parse_button.setEnabled(False)
 
     def on_command_line_build_selected(self):
         if self.imposter_log_path.text():
-            self.compiler_input_src = CompilerInputSource.IMPOSTER
+            self.compiler_input_src = CompilerInputSource.IMPOSTER.value
         elif self.json_compilation_database_path.text():
-            self.compiler_input_src = CompilerInputSource.JSON_COMPILATION_DATABASE
+            self.compiler_input_src = CompilerInputSource.JSON_COMPILATION_DATABASE.value
         else:
             self.compiler_input_src = None
         self.update_compiler_input_state()
 
     def update_compiler_input_state(self):
-        using_command_line = self.compiler_input_src == CompilerInputSource.COMMAND_LINE
-        using_imposter = self.compiler_input_src == CompilerInputSource.IMPOSTER
-        using_json_database = self.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE
+        using_command_line = self.compiler_input_src == CompilerInputSource.COMMAND_LINE.value
+        using_imposter = self.compiler_input_src == CompilerInputSource.IMPOSTER.value
+        using_json_database = self.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE.value
 
         self.parse_button.setEnabled(not using_imposter and not using_json_database and self.prog_language.currentText() != ProgrammingLanguage.SELECT_LANGUAGE.value)
         self.imposter_log_path.setEnabled(not using_command_line and not using_json_database)

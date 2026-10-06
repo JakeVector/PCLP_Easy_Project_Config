@@ -1,8 +1,7 @@
 import os
 import subprocess
-import sys
 from shutil import which
-from config.configuration import Configuration
+from config.configuration import Configuration, save_config
 from gui.constants import CompilerInputSource, OutputFormat
 from gui.constants import OperatingSystem
 from pathlib import Path
@@ -53,7 +52,7 @@ class PclpConfigurator:
 
     def build_project_config(self):
         self.project_lnt_location = Path(self.config.lint_output_location) / f"{self.config.project_lnt_name}"
-        if self.config.compiler_input_src == CompilerInputSource.IMPOSTER:
+        if self.config.compiler_input_src == CompilerInputSource.IMPOSTER.value:
             imposter_command = [self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
                                f"--compiler-bin={self.config.compiler_binary}",
                                f"--imposter-file={self.config.imposter_log}",
@@ -61,7 +60,7 @@ class PclpConfigurator:
                                "--generate-project-config"]
             subprocess.run(imposter_command)
             self.script_text.append(" ".join(imposter_command))
-        elif self.config.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE:
+        elif self.config.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE.value:
             json_command = [self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
                             f"--compiler-bin={self.config.compiler_binary}",
                             f"--compilation-db={self.config.json_compilation_database}",
@@ -69,7 +68,7 @@ class PclpConfigurator:
                             "--generate-project-config"]
             subprocess.run(json_command)
             self.script_text.append(" ".join(json_command))
-        elif self.config.compiler_input_src == CompilerInputSource.COMMAND_LINE:
+        elif self.config.compiler_input_src == CompilerInputSource.COMMAND_LINE.value:
             project_file = self.project_lnt_location
             project_text = []
             for include in self.config.include_list:
@@ -131,6 +130,7 @@ class PclpConfigurator:
             os.chmod(script_path, 0o755)
             
     def generate(self):
+        save_config(self.config)
         self.build_compiler_config()
         self.build_options_file()
         self.build_project_config()
