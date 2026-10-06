@@ -526,18 +526,15 @@ class MainWindow(QMainWindow):
         else:
             combobox.setCurrentIndex(0)
 
-    def find_menu_action(self, menu, value):
-        for action in menu.actions():
-            if action.text() == value:
-                return action
+    def find_menu_action(self, value):
+        valid_compilers = STANDALONE_COMPILERS.copy()
 
-            submenu = action.menu()
-            if submenu:
-                found_action = self.find_menu_action(submenu, value)
-                if found_action:
-                    return found_action
-        return None
-
+        for compilers in COMPILER_GROUPS.values():
+            valid_compilers.extend(compilers)
+        if value not in valid_compilers:
+            return False
+        return True
+        
     def clear_parsed_command(self):
         self.compiler_input_src = None
         self.parsed_command_line = ""
@@ -650,9 +647,9 @@ class MainWindow(QMainWindow):
         self.pclp_path.setText(config.pclp_path)
         self.pclp_config_path.setText(config.pclp_config_path)
         self.set_combobox_value(self.prog_language, config.prog_language)
-        action = self.find_menu_action(self.compiler_button.menu(), config.selected_compiler)
-        if action:
-            action.trigger()
+        if (self.find_menu_action(config.selected_compiler)):
+            self.compiler_button.setText(config.selected_compiler)
+            self.selected_compiler = config.selected_compiler
         self.compiler_binary.setText(config.compiler_binary)
         self.lint_output_location.setText(config.lint_output_location)
         self.lint_output_name.setText(config.lint_output_name)
