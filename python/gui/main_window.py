@@ -1,5 +1,4 @@
 import os
-
 from PySide6.QtWidgets import (
     QApplication, 
     QWidget, 
@@ -23,9 +22,10 @@ from PySide6.QtWidgets import (
     QButtonGroup,
 )
 from PySide6.QtCore import QSize
+from PySide6.QtGui import QAction
 import sys
 from pathlib import Path
-from config.configuration import Configuration
+from config.configuration import Configuration, load_config, save_config
 from config.pclp_configurator import PclpConfigurator
 from gui.command_line_dialog import CommandLineDialog
 from gui.constants import CompilerInputSource, ProgrammingLanguage, OperatingSystem, OutputFormat
@@ -51,6 +51,8 @@ class MainWindow(QMainWindow):
         self.create_tabs()
         # Creating the main window layout
         self.create_window_layout()
+
+        self.create_file_menu_bar()
         
     # Function to create widgets for the GUI to unclutter the __init__ function.
     def create_widgets(self):
@@ -414,6 +416,19 @@ class MainWindow(QMainWindow):
 
         return layout, options_list
 
+    def create_file_menu_bar(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+
+        import_action = QAction("Import Configuration...", self)
+        export_action = QAction("Export Configuration...", self)
+
+        file_menu.addAction(import_action)
+        file_menu.addAction(export_action)
+
+        import_action.triggered.connect(self.import_config)
+        export_action.triggered.connect(self.export_config)
+
     def add_item_to_list(self, dialog_title="Add Item", label_text="Enter item:", options_list=None):
         dialog = QDialog(self)
         dialog.setWindowTitle(dialog_title)
@@ -600,16 +615,78 @@ class MainWindow(QMainWindow):
             include_list=self.include_list,
             define_list=self.define_list,
             source_file_list=self.source_file_list,
+            c_ext_list=[self.c_ext_list.item(i).text() for i in range(self.c_ext_list.count())],
+            cpp_ext_list=[self.cpp_ext_list.item(i).text() for i in range(self.cpp_ext_list.count())],
             project_lnt_name=self.project_lnt_name.text(),
             output_format=self.output_format.currentText(),
             output_file_path_folder=self.output_file_path_folder.text(),
             output_file_name=self.output_file_name.text()
         )
+
+    def populate_fields(self, config: Configuration):
+        for button in self.os_button_group.buttons():
+            if button.text() == config.operating_system:
+                button.setChecked(True)
+                break
+        self.pclp_path.setText(config.pclp_path)
+        self.pclp_config_path.setText(config.pclp_config_path)
+        self.prog_language.setCurrentText(config.prog_language)
+        self.compiler_button.setText(config.selected_compiler)
+        self.selected_compiler = config.selected_compiler
+        self.compiler_binary.setText(config.compiler_binary)
+        self.lint_output_location.setText(config.lint_output_location)
+        self.lint_output_name.setText(config.lint_output_name)
+        self.additional_compiler_options.setText(config.additional_compiler_options)
+        self.options_file_name.setText(config.options_file_name)
+        for checkbox in self.code_standards:
+            checkbox.setChecked(CODING_STANDARDS[checkbox.text()] in config.code_standards)
+        self.add_options_list.clear()
+        for option in config.additional_lint_options:
+            self.add_options_list.addItem(option)
+        self.c_ext_list.clear()
+        self.cpp_ext_list.clear()
+        for c_ext in config.c_ext_list:
+            self.c_ext_list.addItem(c_ext)
+        for cpp_ext in config.cpp_ext_list:
+            self.cpp_ext_list.addItem(cpp_ext)
+        self.imposter_log_path.setText(config.imposter_log)
+        self.json_compilation_database_path.setText(config.json_compilation_database)
+        self.parsed_command_line = config.parsed_command_line
+        self.compiler_input_src = config.compiler_input_src
+        self.include_list = config.include_list
+        self.define_list = config.define_list
+        self.source_file_list = config.source_file_list
+        self.project_lnt_name.setText(config.project_lnt_name)
+        self.output_format.setCurrentText(config.output_format)
+        self.output_file_path_folder.setText(config.output_file_path_folder)
+        self.output_file_name.setText(config.output_file_name)
     
     def on_button_clicked_generate_config(self):
         config = self.build_configuration()
         pclp_configurator = PclpConfigurator(config)
         pclp_configurator.generate()
+
+    def import_config(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+        self,
+        "Import Configuration",
+        "",
+        "JSON Files (*.json)"
+    )
+        if file_path:
+            config = load_config(file_path)
+            self.populate_fields(config)
+
+    def export_config(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+        self,
+        "Export Configuration",
+        "pclp_config.json",
+        "JSON Files (*.json)"
+    )
+        if file_path:
+            config = self.build_configuration()
+            save_config(config, file_path)
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.

@@ -22,13 +22,15 @@ class Configuration:
     include_list: list[str]
     define_list: list[str]
     source_file_list: list[str]
+    c_ext_list: list[str]
+    cpp_ext_list: list[str]
     project_lnt_name: str
     output_format: str
     output_file_path_folder: str
     output_file_name: str
 
-def save_config(config: Configuration):
-        with open(f"{config.output_file_path_folder}\\pclp_config.json", "w") as f:
+def save_config(config: Configuration, file_path: str):
+        with open(file_path, "w") as f:
             json.dump(asdict(config), f, indent=4)
 
 def load_config(file_path: str) -> Configuration:

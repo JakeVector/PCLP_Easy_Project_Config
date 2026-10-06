@@ -130,7 +130,7 @@ class PclpConfigurator:
             os.chmod(script_path, 0o755)
             
     def generate(self):
-        save_config(self.config)
+        save_config(self.config, f"{self.config.output_file_path_folder}\\pclp_config.json")
         self.build_compiler_config()
         self.build_options_file()
         self.build_project_config()
