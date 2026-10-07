@@ -5,6 +5,7 @@ python/config/__pycache__/
 python/gui/__pycache__/
 python/test/__pycache__/
 python/test/output
+python/test/input
 Test_Output/
 python/config/generate-reports.py
 *.txt

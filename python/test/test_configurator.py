@@ -1,6 +1,7 @@
 from config.configuration import Configuration
 from config.pclp_configurator import PclpConfigurator
 from config.command_line_parser import CommandLineParser
+from gui.constants import CompilerInputSource
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -11,6 +12,8 @@ load_dotenv(PROJECT_ROOT / ".env")
 TEST_OUTPUT = os.getenv("TEST_OUTPUT")
 PCLINT_HOME = os.getenv("PCLINT_HOME")
 MINGW_HOME = os.getenv("MINGW_HOME")
+IMPOSTER_LOG = os.getenv("IMPOSTER_LOG")
+JSON_COMPILATION_DATABASE = os.getenv("JSON_COMPILATION_DATABASE")
 
 def test_command_line_parser():
     include_flag = "-I"
@@ -45,12 +48,12 @@ def test_pclp_configurator_initialization():
         code_standards=["au-misra-cpp2.lnt"],
         additional_lint_options=["-max_threads=8"],
         imposter_log="C:/lint/imposter.log",
-        json_compilation_database="C:/lint/compile_commands.json",
+        json_compilation_database="",
         parsed_command_line="",
-        compiler_input_src="C:/src",
-        include_list=["C:/include"],
-        define_list=["DEBUG"],
-        source_file_list=["C:/src/main.c"],
+        compiler_input_src=f"{CompilerInputSource.IMPOSTER.value}",
+        include_list=[],
+        define_list=[],
+        source_file_list=[],
         c_ext_list=[".c"],
         cpp_ext_list=[".cpp"],
         project_lnt_name="project.lnt",
@@ -77,12 +80,12 @@ def test_generate_compiler_config():
             code_standards=["au-misra-cpp2.lnt"],
             additional_lint_options=["-max_threads=8"],
             imposter_log="C:/lint/imposter.log",
-            json_compilation_database="C:/lint/compile_commands.json",
+            json_compilation_database="",
             parsed_command_line="",
-            compiler_input_src="C:/src",
-            include_list=["C:/include"],
-            define_list=["DEBUG"],
-            source_file_list=["C:/src/main.c"],
+            compiler_input_src=f"{CompilerInputSource.IMPOSTER.value}",
+            include_list=[],
+            define_list=[],
+            source_file_list=[],
             c_ext_list=[".c"],
             cpp_ext_list=[".cpp"],
             project_lnt_name="project.lnt",
@@ -96,5 +99,41 @@ def test_generate_compiler_config():
     config_lnt_path = Path(f"{config.lint_output_location}") / f"{config.lint_output_name}.lnt"
     config_header_path = Path(f"{config.lint_output_location}") / f"{config.lint_output_name}.h"
     configurator.build_compiler_config()
-    assert config_lnt_path.exists()
-    assert config_header_path.exists()
+    assert Path(config_lnt_path).exists()
+    assert Path(config_header_path).exists()
+
+def test_imposter_generate_project_config():
+    # Generate actual project configuration
+    config = Configuration(
+            operating_system="Windows",
+            pclp_path=f"{PCLINT_HOME}",
+            pclp_config_path=f"{PCLINT_HOME}/config/pclp_config.py",
+            prog_language="C++",
+            selected_compiler="gcc",
+            compiler_binary=f"{MINGW_HOME}\\bin\\gcc.exe",
+            lint_output_location=f"{TEST_OUTPUT}",
+            lint_output_name="co-gcc",
+            additional_compiler_options="-Wall -Wextra",
+            options_file_name="additional_options.lnt",
+            code_standards=["au-misra-cpp2.lnt"],
+            additional_lint_options=["-max_threads=8"],
+            imposter_log=f"{IMPOSTER_LOG}",
+            json_compilation_database="",
+            parsed_command_line="",
+            compiler_input_src=f"{CompilerInputSource.IMPOSTER.value}",
+            include_list=[],
+            define_list=[],
+            source_file_list=[],
+            c_ext_list=[".c"],
+            cpp_ext_list=[".cpp"],
+            project_lnt_name="project.lnt",
+            output_format="xml",
+            output_file_path_folder="C:/lint/output",
+            output_file_name="lint_output"
+        )
+    configurator = PclpConfigurator(config)
+    assert hasattr(configurator, 'build_project_config')
+    assert callable(configurator.build_project_config)
+    project_lnt_path = Path(f"{config.lint_output_location}") / f"{config.project_lnt_name}"
+    configurator.build_project_config()
+    assert Path(project_lnt_path).exists()
