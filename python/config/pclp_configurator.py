@@ -10,6 +10,7 @@ class PclpConfigurator:
     def __init__(self, config: Configuration):
         self.config = config
         self.script_text = []
+        self.config_generated = False
 
         if self.config.operating_system == OperatingSystem.WINDOWS.value:
             self.pclp_exe = Path(self.config.pclp_path) / "pclp64.exe"
@@ -80,7 +81,7 @@ class PclpConfigurator:
 
             project_file.write_text("".join(project_text) + "\n")
 
-    def run_analysis(self):
+    def build_analysis_command(self):
         analysis_command = []
         sarif_conversion_command = []
         if not Path(self.pclp_exe).exists():
@@ -89,13 +90,11 @@ class PclpConfigurator:
             analysis_command = [str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
                            str(self.project_lnt_location)]
-            subprocess.run(analysis_command)
         elif self.config.output_format == OutputFormat.HTML.value or self.config.output_format == OutputFormat.XML.value:
             analysis_command = [str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
                                 f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
                                 f"env-{self.config.output_format}.lnt",
                                 str(self.project_lnt_location)]
-            subprocess.run(analysis_command)
         elif self.config.output_format == OutputFormat.SARIF.value:
             xml_results_path = f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.xml"
             dump_output_path = f"{self.config.output_file_path_folder}\\dump_output.xml"
@@ -111,11 +110,17 @@ class PclpConfigurator:
                                         f"--input-xml-descriptions", f"{dump_output_path}", f"--input-version", f"{version_path}",
                                         f"--output-sarif", f"{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}",
                                         f"--deduplicate", f"1"]
-            subprocess.run(analysis_command)
-            subprocess.run(sarif_conversion_command)
         self.script_text.append(" ".join(analysis_command))
         if self.config.output_format == OutputFormat.SARIF.value:
             self.script_text.append(" ".join(sarif_conversion_command))
+        return analysis_command, sarif_conversion_command
+
+
+    def run_analysis(self, analysis_command, sarif_conversion_command=None):
+        if self.config_generated:
+            subprocess.run(analysis_command)
+            if self.config.output_format == OutputFormat.SARIF.value:
+                subprocess.run(sarif_conversion_command)
 
     def create_script(self):
         if self.config.operating_system == OperatingSystem.WINDOWS.value:
@@ -134,5 +139,6 @@ class PclpConfigurator:
         self.build_compiler_config()
         self.build_options_file()
         self.build_project_config()
-        self.run_analysis()
+        self.build_analysis_command()
         self.create_script()
+        self.config_generated = True

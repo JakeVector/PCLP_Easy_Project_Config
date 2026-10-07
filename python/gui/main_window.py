@@ -101,6 +101,9 @@ class MainWindow(QMainWindow):
         self.generate_button = self.create_generic_button_widget("Generate Configuration", function=self.on_button_clicked_generate_config, fixedWidth=True)
         self.generate_button.setEnabled(False)
 
+        self.run_analysis_button = self.create_generic_button_widget("Run Analysis", function=self.on_button_clicked_run_analysis, fixedWidth=True)
+        self.run_analysis_button.setEnabled(False)
+
         self.os_windows = QRadioButton(OperatingSystem.WINDOWS.value)
         self.os_windows.setChecked(True)  # Set Windows as the default selected OS
         self.os_linux = QRadioButton(OperatingSystem.LINUX.value)
@@ -142,9 +145,10 @@ class MainWindow(QMainWindow):
 
         # Generate button layout is created separately to ensure it is added to the main layout correctly.
         generate_button_layout = QHBoxLayout()
-        generate_button_layout.addStretch()  # Add stretch to push the button to the right
+        generate_button_layout.addStretch()
         generate_button_layout.addWidget(self.generate_button)
-        generate_button_layout.addStretch()  # Add stretch to push the button to the right
+        generate_button_layout.addWidget(self.run_analysis_button)
+        generate_button_layout.addStretch() 
         #self.compiler_layout.addRow(generate_button_layout)
         
         self.pclp_layout.addStretch()
@@ -157,8 +161,8 @@ class MainWindow(QMainWindow):
         self.compiler_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.options_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
         self.project_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=True))
-        self.analysis_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=False))
         self.analysis_layout.addLayout(generate_button_layout)
+        self.analysis_layout.addLayout(self.create_navigation_buttons(show_previous=True, show_next=False))
 
     # This function creates the tabs for the GUI, adding the previously created layouts to each tab.
     def create_tabs(self):
@@ -680,8 +684,14 @@ class MainWindow(QMainWindow):
     
     def on_button_clicked_generate_config(self):
         config = self.build_configuration()
-        pclp_configurator = PclpConfigurator(config)
-        pclp_configurator.generate()
+        self.pclp_configurator = PclpConfigurator(config)
+        self.pclp_configurator.generate()
+        self.run_analysis_button.setEnabled(True)
+
+    def on_button_clicked_run_analysis(self):
+        if hasattr(self, 'pclp_configurator'):
+            analysis_command, sarif_conversion_command = self.pclp_configurator.build_analysis_command()
+            self.pclp_configurator.run_analysis(analysis_command=analysis_command, sarif_conversion_command=sarif_conversion_command)
 
     def import_config(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -693,6 +703,12 @@ class MainWindow(QMainWindow):
         if file_path:
             config = load_config(file_path)
             self.populate_fields(config)
+            self.pclp_configurator = PclpConfigurator(config)
+            self.pclp_configurator.config_generated = True
+            self.pclp_configurator.compiler_lnt_location = Path(config.lint_output_location) / f"{config.lint_output_name}"
+            self.pclp_configurator.options_file_location = Path(config.lint_output_location) / f"{config.options_file_name}"
+            self.pclp_configurator.project_lnt_location = Path(config.lint_output_location) / f"{config.project_lnt_name}"
+            self.run_analysis_button.setEnabled(True)
 
     def export_config(self):
         file_path, _ = QFileDialog.getSaveFileName(
