@@ -1,6 +1,7 @@
 import os
 from PySide6.QtWidgets import (
-    QApplication, 
+    QApplication,
+    QMessageBox, 
     QWidget, 
     QMainWindow, 
     QPushButton, 
@@ -20,8 +21,9 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QRadioButton,
     QButtonGroup,
+    QProgressDialog,
 )
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, QObject, QThread, Signal, Slot
 from PySide6.QtGui import QAction
 import sys
 from pathlib import Path
@@ -34,6 +36,7 @@ from gui.constants import (
     CODING_STANDARDS,
     STANDALONE_COMPILERS,
 )
+from gui.worker_thread import Worker
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -433,6 +436,14 @@ class MainWindow(QMainWindow):
         import_action.triggered.connect(self.import_config)
         export_action.triggered.connect(self.export_config)
 
+    def create_progress_dialog(self, label_text="Processing...", minimum=0, maximum=0):
+        progress_dialog = QProgressDialog(label_text, None, minimum, maximum, self)
+        progress_dialog.setWindowTitle("Processing")
+        progress_dialog.setCancelButton(None)
+        progress_dialog.setMinimumDuration(0)
+        progress_dialog.setModal(True)
+        return progress_dialog
+
     def add_item_to_list(self, dialog_title="Add Item", label_text="Enter item:", options_list=None):
         dialog = QDialog(self)
         dialog.setWindowTitle(dialog_title)
@@ -685,13 +696,13 @@ class MainWindow(QMainWindow):
     def on_button_clicked_generate_config(self):
         config = self.build_configuration()
         self.pclp_configurator = PclpConfigurator(config)
-        self.pclp_configurator.generate()
+        self.start_processing(task=self.pclp_configurator.generate, message="Generating configuration...")
         self.run_analysis_button.setEnabled(True)
 
     def on_button_clicked_run_analysis(self):
         if hasattr(self, 'pclp_configurator'):
             analysis_command, sarif_conversion_command = self.pclp_configurator.build_analysis_command()
-            self.pclp_configurator.run_analysis(analysis_command=analysis_command, sarif_conversion_command=sarif_conversion_command)
+            self.start_processing(task=lambda: self.pclp_configurator.run_analysis(analysis_command=analysis_command, sarif_conversion_command=sarif_conversion_command), message="Running analysis...")
 
     def import_config(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -721,6 +732,34 @@ class MainWindow(QMainWindow):
             config = self.build_configuration()
             save_config(config, file_path)
 
+    def start_processing(self, task, message):
+        self.progress_dialog = self.create_progress_dialog(label_text=message)
+
+        self.worker = Worker(task)
+        self.thread = QThread(self)
+
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.progress_dialog.close)
+
+        self.worker.error.connect(self.processing_error)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.finished.connect(self.processing_finished)
+
+        self.progress_dialog.show()
+        self.thread.start()
+
+    def processing_finished(self):
+        self.thread = None
+        self.worker = None
+        self.progress_dialog = None
+
+    def processing_error(self, error_message):
+        QMessageBox.critical(self, "Processing Error", error_message)
+    
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
 # If you know you won't use command line arguments QApplication([]) works too.
