@@ -19,12 +19,26 @@ class PclpConfigurator:
         elif self.config.operating_system == OperatingSystem.MACOS.value:
             self.pclp_exe = Path(self.config.pclp_path) / "pclp64_macos"
 
+        if not Path(self.pclp_exe).exists():
+            raise FileNotFoundError(f"PC-lint Plus executable not found at {self.pclp_exe}")
+
         self.python_exe = (
             which("python")
             or which("python3")
         )
         if self.python_exe is None:
             raise EnvironmentError("Python executable not found.")
+
+    def run_command(self, command, description):
+        try:
+            return subprocess.run(command, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to run command: {description}\n\n"
+                               f"Exit code: {e.returncode}\n\n"
+                               f"{e.stderr or e.stdout}\n") from e
+        except OSError as e:
+            raise RuntimeError(f"Failed to run command: {description}\n\n"
+                               f"OS error: {e}\n") from e
 
     def build_compiler_config(self):
         self.compiler_lnt_location = Path(self.config.lint_output_location) / f"{self.config.lint_output_name}"
@@ -35,7 +49,7 @@ class PclpConfigurator:
                                   f"--compiler-options={self.config.additional_compiler_options}",
                                   f"--generate-compiler-config"]
         self.script_text.append(" ".join(compile_config_command))
-        subprocess.run(compile_config_command)
+        self.run_command(compile_config_command, "Build compiler config")
 
     def build_options_file(self):
         options_text = []
@@ -59,7 +73,7 @@ class PclpConfigurator:
                                f"--imposter-file={self.config.imposter_log}",
                                f"--config-output-lnt-file={self.project_lnt_location}",
                                "--generate-project-config"]
-            subprocess.run(imposter_command)
+            self.run_command(imposter_command, "Build project config with Imposter")
             self.script_text.append(" ".join(imposter_command))
         elif self.config.compiler_input_src == CompilerInputSource.JSON_COMPILATION_DATABASE.value:
             json_command = [self.python_exe, str(self.config.pclp_config_path), f"--compiler={self.config.selected_compiler}",
@@ -67,7 +81,7 @@ class PclpConfigurator:
                             f"--compilation-db={self.config.json_compilation_database}",
                             f"--config-output-lnt-file={self.project_lnt_location}",
                             "--generate-project-config"]
-            subprocess.run(json_command)
+            self.run_command(json_command, "Build project config with JSON")
             self.script_text.append(" ".join(json_command))
         elif self.config.compiler_input_src == CompilerInputSource.COMMAND_LINE.value:
             project_file = self.project_lnt_location
@@ -84,9 +98,7 @@ class PclpConfigurator:
     def build_analysis_command(self):
         analysis_command = []
         sarif_conversion_command = []
-        if not Path(self.pclp_exe).exists():
-            raise FileNotFoundError(f"PC-lint Plus executable not found at {self.pclp_exe}")
-        elif self.config.output_format == OutputFormat.TEXT.value:
+        if self.config.output_format == OutputFormat.TEXT.value:
             analysis_command = [str(self.pclp_exe), str(self.compiler_lnt_location), str(self.options_file_location),
                            f"-os[{self.config.output_file_path_folder}\\{self.config.output_file_name}.{self.config.output_format}]",
                            str(self.project_lnt_location)]
@@ -115,7 +127,7 @@ class PclpConfigurator:
             self.script_text.append(" ".join(sarif_conversion_command))
         return analysis_command, sarif_conversion_command
 
-
+    # No error checking here because PC-lint analysis may have non-zero exit codes even if the analysis is successful
     def run_analysis(self, analysis_command, sarif_conversion_command=None):
         if self.config_generated:
             subprocess.run(analysis_command)
