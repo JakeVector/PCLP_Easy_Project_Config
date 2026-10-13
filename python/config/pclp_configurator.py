@@ -52,10 +52,10 @@ class PclpConfigurator:
         self.run_command(compile_config_command, "Build compiler config")
 
     def build_options_file(self):
+        self.options_file_location = Path(self.config.lint_output_location) / f"{self.config.options_file_name}"
         options_text = []
         options_text.append(f'-i"{self.config.pclp_path}/lnt"\n')
         if self.config.code_standards or self.config.additional_lint_options:
-            self.options_file_location = Path(self.config.lint_output_location) / f"{self.config.options_file_name}"
 
             for i, std in enumerate(self.config.code_standards):
                 options_text.append(f"{std}\n")

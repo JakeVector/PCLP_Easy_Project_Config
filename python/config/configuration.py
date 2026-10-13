@@ -1,6 +1,8 @@
 import json
 from dataclasses import dataclass, asdict
 
+from config.command_line_parser import ParsedCommandLine
+
 @dataclass
 class Configuration:
     operating_system: str
@@ -17,7 +19,7 @@ class Configuration:
     additional_lint_options: list[str]
     imposter_log: str
     json_compilation_database: str
-    parsed_command_line: str
+    parsed_command_line: ParsedCommandLine
     compiler_input_src: str
     include_list: list[str]
     define_list: list[str]
@@ -36,4 +38,10 @@ def save_config(config: Configuration, file_path: str):
 def load_config(file_path: str) -> Configuration:
     with open(file_path, "r") as f:
         data = json.load(f)
+    parsed = data.get("parsed_command_line")
+    if isinstance(parsed, dict):
+        data["parsed_command_line"] = ParsedCommandLine(**parsed)
+    else:
+        data["parsed_command_line"] = None
+        
     return Configuration(**data)

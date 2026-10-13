@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QProgressDialog,
 )
-from PySide6.QtCore import QSize, QObject, QThread, Signal, Slot
+from PySide6.QtCore import QSize, QThread
 from PySide6.QtGui import QAction
 import sys
 from pathlib import Path
@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PC-lint Plus Configurator")
-        self.setFixedSize(QSize(650, 600))
+        self.resize(QSize(650, 600))
 
         # Creating widgets for the GUI
         self.create_widgets()
@@ -552,11 +552,10 @@ class MainWindow(QMainWindow):
         
     def clear_parsed_command(self):
         self.compiler_input_src = None
-        self.parsed_command_line = ""
+        self.parsed_command_line = None
         self.include_list.clear()
         self.define_list.clear()
         self.source_file_list.clear()
-        self.define_list.clear()
         self.update_compiler_input_state()
         self.clear_parse_button.setEnabled(False)
 
@@ -617,7 +616,7 @@ class MainWindow(QMainWindow):
             valid = False
         if not self.selected_compiler:
             valid = False
-        if self.output_format.currentText() == "Select Format":
+        if self.output_format.currentText() == "Select Output Format":
             valid = False
         if self.prog_language.currentText() == "Select Language":
             valid = False

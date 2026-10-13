@@ -36,7 +36,7 @@ def test_pclp_configurator_initialization():
     # Mock configuration for testing
     config = Configuration(
         operating_system="Windows",
-        pclp_path="C:/PCLint",
+        pclp_path=f"{PCLINT_HOME}",
         pclp_config_path="C:/PCLint/config/pclp_config.py",
         prog_language="C++",
         selected_compiler="gcc",
