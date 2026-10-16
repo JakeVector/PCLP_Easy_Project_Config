@@ -94,10 +94,13 @@ class MainWindow(QMainWindow):
         self.json_compilation_database_path.textChanged.connect(self.on_command_line_build_selected)
         self.json_compilation_database_path.textChanged.connect(self.update_compiler_input_state)
 
-        self.prog_language = self.create_combobox_widget(["Select Language", ProgrammingLanguage.C.value, ProgrammingLanguage.CPP.value, ProgrammingLanguage.MIXED.value])
-        self.output_format = self.create_combobox_widget(["Select Output Format", OutputFormat.TEXT.value, OutputFormat.HTML.value, OutputFormat.XML.value, OutputFormat.SARIF.value])
+        self.prog_language = self.create_combobox_widget([ProgrammingLanguage.SELECT_LANGUAGE.value, ProgrammingLanguage.C.value, 
+                                                          ProgrammingLanguage.CPP.value, ProgrammingLanguage.MIXED.value])
+        self.output_format = self.create_combobox_widget([OutputFormat.DEFAULT.value, OutputFormat.TEXT.value, OutputFormat.HTML.value, 
+                                                          OutputFormat.XML.value, OutputFormat.SARIF.value])
 
         self.prog_language.currentIndexChanged.connect(self.validate_inputs)
+        self.prog_language.currentIndexChanged.connect(self.update_compiler_input_state)
         self.output_format.currentIndexChanged.connect(self.validate_inputs)
 
         # Button widgets
@@ -152,7 +155,6 @@ class MainWindow(QMainWindow):
         generate_button_layout.addWidget(self.generate_button)
         generate_button_layout.addWidget(self.run_analysis_button)
         generate_button_layout.addStretch() 
-        #self.compiler_layout.addRow(generate_button_layout)
         
         self.pclp_layout.addStretch()
         self.compiler_layout.addStretch()
@@ -616,12 +618,10 @@ class MainWindow(QMainWindow):
             valid = False
         if not self.selected_compiler:
             valid = False
-        if self.output_format.currentText() == "Select Output Format":
+        if self.output_format.currentText() == OutputFormat.DEFAULT.value:
             valid = False
-        if self.prog_language.currentText() == "Select Language":
+        if self.prog_language.currentText() == ProgrammingLanguage.SELECT_LANGUAGE.value:
             valid = False
-        else:
-            self.parse_button.setEnabled(True)
         self.generate_button.setEnabled(valid)
 
     def build_configuration(self):

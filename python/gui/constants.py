@@ -17,6 +17,7 @@ class OperatingSystem(Enum):
     MACOS = "macOS"
 
 class OutputFormat(Enum):
+    DEFAULT = "Select Output Format"
     TEXT = "txt"
     HTML = "html"
     XML = "xml"
